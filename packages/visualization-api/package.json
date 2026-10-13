@@ -1,0 +1,11 @@
+{
+  "name": "@sepj/visualization-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Die viz-API, die der generierte Code aufruft",
+  "type": "module",
+  "main": "./index.mjs",
+  "exports": {
+    ".": "./index.mjs"
+  }
+}

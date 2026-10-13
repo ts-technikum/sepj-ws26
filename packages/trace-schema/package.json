@@ -1,0 +1,12 @@
+{
+  "name": "@sepj/trace-schema",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Trace-Format: Vokabular, JSON Schema und Validator",
+  "type": "module",
+  "main": "./index.mjs",
+  "exports": {
+    ".": "./index.mjs",
+    "./schema": "./trace.schema.json"
+  }
+}
