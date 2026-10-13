@@ -1,0 +1,25 @@
+// Handgeschriebener Referenztrace nach docs/interface-contract.md (Version 1.0).
+export const demoTrace = {
+  version: '1.0', algorithm: 'Bubble Sort', source: 'Wiederhole Vergleiche benachbarter Elemente und tausche bei Bedarf.', truncated: false,
+  events: [
+    { op: 'array', id: 'a', values: [5, 2, 4, 1], prev: null, group: 0 },
+    { op: 'step', line: 1, explanation: 'Ausgangsarray', group: 0 },
+    { op: 'highlight', id: 'a', target: { indices: [0, 1] }, style: 'compare', group: 1 },
+    { op: 'step', line: 2, explanation: '5 und 2 vergleichen', group: 1 },
+    { op: 'swap', id: 'a', i: 0, j: 1, group: 2 },
+    { op: 'highlight', id: 'a', target: { indices: [0, 1] }, style: 'swap', group: 2 },
+    { op: 'step', line: 3, explanation: '5 und 2 tauschen', group: 2 },
+    { op: 'highlight', id: 'a', target: { indices: [1, 2] }, style: 'compare', group: 3 },
+    { op: 'step', line: 2, explanation: '5 und 4 vergleichen', group: 3 },
+    { op: 'swap', id: 'a', i: 1, j: 2, group: 4 },
+    { op: 'highlight', id: 'a', target: { indices: [1, 2] }, style: 'swap', group: 4 },
+    { op: 'step', line: 3, explanation: '5 und 4 tauschen', group: 4 },
+    { op: 'highlight', id: 'a', target: { indices: [2, 3] }, style: 'compare', group: 5 },
+    { op: 'step', line: 2, explanation: '5 und 1 vergleichen', group: 5 },
+    { op: 'swap', id: 'a', i: 2, j: 3, group: 6 },
+    { op: 'highlight', id: 'a', target: { indices: [2, 3] }, style: 'swap', group: 6 },
+    { op: 'step', line: 3, explanation: '5 und 1 tauschen', group: 6 },
+    { op: 'highlight', id: 'a', target: { indices: [3] }, style: 'sorted', group: 7 },
+    { op: 'step', line: 4, explanation: '5 steht an seiner endgültigen Position', group: 7 },
+  ],
+};
