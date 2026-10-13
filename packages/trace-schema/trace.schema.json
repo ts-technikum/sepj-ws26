@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ts-technikum/sepj-ws26/packages/trace-schema/trace.schema.json",
+  "title": "Trace",
+  "description": "Aufgezeichneter Ablauf eines Algorithmus. Erzeugt von der viz-Laufzeit, gelesen vom Renderer.",
+  "type": "object",
+  "required": ["version", "events"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": "1.0" },
+    "algorithm": { "type": "string", "description": "Anzeigename, z.B. \"Bubble Sort\"" },
+    "source": { "type": "string", "description": "Ursprünglicher Pseudocode, zeilenweise referenziert über step.line" },
+    "truncated": { "type": "boolean", "default": false, "description": "true, wenn ein Limit gegriffen hat" },
+    "events": { "type": "array", "items": { "$ref": "#/$defs/event" } }
+  },
+  "$defs": {
+    "group": { "type": "integer", "minimum": 0, "description": "Schrittnummer, zu der das Event gehört" },
+    "id": { "type": "string", "minLength": 1 },
+    "index": { "type": "integer", "minimum": 0 },
+    "value": { "type": ["number", "string", "boolean", "null"] },
+
+    "nodeStateName": { "enum": ["default", "active", "frontier", "visited"] },
+    "edgeStateName": { "enum": ["default", "active", "tree", "rejected"] },
+    "highlightStyle": { "enum": ["compare", "active", "swap", "sorted", "range", "excluded"] },
+
+    "target": {
+      "description": "Was hervorgehoben wird: einzelne Elemente oder ein zusammenhängender Bereich",
+      "oneOf": [
+        {
+          "title": "indices",
+          "type": "object",
+          "required": ["indices"],
+          "additionalProperties": false,
+          "properties": {
+            "indices": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/index" } }
+          }
+        },
+        {
+          "title": "range",
+          "type": "object",
+          "required": ["range"],
+          "additionalProperties": false,
+          "properties": {
+            "range": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "$ref": "#/$defs/index" } }
+          }
+        }
+      ]
+    },
+
+    "node": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "label": { "type": "string" },
+        "state": { "$ref": "#/$defs/nodeStateName" }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": ["id", "from", "to"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "from": { "$ref": "#/$defs/id" },
+        "to": { "$ref": "#/$defs/id" },
+        "weight": { "type": "number" },
+        "state": { "$ref": "#/$defs/edgeStateName" }
+      }
+    },
+
+    "event": {
+      "oneOf": [
+        { "$ref": "#/$defs/evArray" },
+        { "$ref": "#/$defs/evGraph" },
+        { "$ref": "#/$defs/evScalar" },
+        { "$ref": "#/$defs/evSet" },
+        { "$ref": "#/$defs/evSwap" },
+        { "$ref": "#/$defs/evSetScalar" },
+        { "$ref": "#/$defs/evNodeState" },
+        { "$ref": "#/$defs/evEdgeState" },
+        { "$ref": "#/$defs/evHighlight" },
+        { "$ref": "#/$defs/evPointer" },
+        { "$ref": "#/$defs/evStep" }
+      ]
+    },
+
+    "evArray": {
+      "title": "array", "type": "object",
+      "required": ["op", "id", "values", "group"], "additionalProperties": false,
+      "properties": {
+        "op": { "const": "array" }, "id": { "$ref": "#/$defs/id" },
+        "values": { "type": "array", "items": { "$ref": "#/$defs/value" } },
+        "prev": { "type": ["array", "null"], "items": { "$ref": "#/$defs/value" } },
+        "group": { "$ref": "#/$defs/group" }
+      }
+    },
+    "evGraph": {
+      "title": "graph", "type": "object",
+      "required": ["op", "id", "nodes", "edges", "group"], "additionalProperties": false,
+      "properties": {
+        "op": { "const": "graph" }, "id": { "$ref": "#/$defs/id" },
+        "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+        "edges": { "type": "array", "items": { "$ref": "#/$defs/edge" } },
+        "directed": { "type": "boolean" },
+        "group": { "$ref": "#/$defs/group" }
+      }
+    },
+    "evScalar": {
+      "title": "scalar", "type": "object",
+      "required": ["op", "id", "value", "group"], "additionalProperties": false,
+      "properties": {
+        "op": { "const": "scalar" }, "id": { "$ref": "#/$defs/id" },
+        "value": { "$ref": "#/$defs/value" }, "prev": { "$ref": "#/$defs/value" },
+        "group": { "$ref": "#/$defs/group" }
+      }
+    },
+    "evSet": {
+      "title": "set", "type": "object",
+      "required": ["op", "id", "index", "value", "prev", "group"], "additionalProperties": false,
+      "properties": {
+        "op": { "const": "set" }, "id": { "$ref": "#/$defs/id" },
+        "index": { "$ref": "#/$defs/index" },
+        "value": { "$ref": "#/$defs/value" }, "prev": { "$ref": "#/$defs/value" },
+        "group": { "$ref": "#/$defs/group" }
+      }
+    },
+    "evSwap": {
+      "title": "swap", "type": "object",
+      "required": ["op", "id", "i", "j", "group"], "additionalProperties": false,
+      "properties": {
+        "op": { "const": "swap" }, "id": { "$ref": "#/$defs/id" },
+        "i": { "$ref": "#/$defs/index" }, "j": { "$ref": "#/$defs/index" },
+        "group": { "$ref": "#/$defs/group" }
+      }
+    },
+    "evSetScalar": {
+      "title": "setScalar", "type": "object",
+      "required": ["op", "id", "value", "group"], "additionalProperties": false,
+      "properties": {
+        "op": { "const": "setScalar" }, "id": { "$ref": "#/$defs/id" },
+        "value": { "$ref": "#/$defs/value" }, "prev": { "$ref": "#/$defs/value" },
+        "group": { "$ref": "#/$defs/group" }
+      }
+    },
+    "evNodeState": {
+      "title": "nodeState", "type": "object",
+      "required": ["op", "id", "nodeId", "state", "prev", "group"], "additionalProperties": false,
+      "properties": {
+        "op": { "const": "nodeState" }, "id": { "$ref": "#/$defs/id" },
+        "nodeId": { "$ref": "#/$defs/id" },
+        "state": { "$ref": "#/$defs/nodeStateName" }, "prev": { "$ref": "#/$defs/nodeStateName" },
+        "group": { "$ref": "#/$defs/group" }
+      }
+    },
+    "evEdgeState": {
+      "title": "edgeState", "type": "object",
+      "required": ["op", "id", "edgeId", "state", "prev", "group"], "additionalProperties": false,
+      "properties": {
+        "op": { "const": "edgeState" }, "id": { "$ref": "#/$defs/id" },
+        "edgeId": { "$ref": "#/$defs/id" },
+        "state": { "$ref": "#/$defs/edgeStateName" }, "prev": { "$ref": "#/$defs/edgeStateName" },
+        "group": { "$ref": "#/$defs/group" }
+      }
+    },
+    "evHighlight": {
+      "title": "highlight", "type": "object",
+      "required": ["op", "id", "target", "style", "group"], "additionalProperties": false,
+      "properties": {
+        "op": { "const": "highlight" }, "id": { "$ref": "#/$defs/id" },
+        "target": { "$ref": "#/$defs/target" },
+        "style": { "$ref": "#/$defs/highlightStyle" },
+        "group": { "$ref": "#/$defs/group" }
+      }
+    },
+    "evPointer": {
+      "title": "pointer", "type": "object",
+      "required": ["op", "id", "name", "index", "group"], "additionalProperties": false,
+      "properties": {
+        "op": { "const": "pointer" }, "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "index": { "$ref": "#/$defs/index" },
+        "group": { "$ref": "#/$defs/group" }
+      }
+    },
+    "evStep": {
+      "title": "step", "type": "object",
+      "required": ["op", "group"], "additionalProperties": false,
+      "properties": {
+        "op": { "const": "step" },
+        "line": { "type": ["integer", "null"], "minimum": 1,
+                  "description": "Zeile im Pseudocode, 1-basiert" },
+        "explanation": { "type": ["string", "null"] },
+        "group": { "$ref": "#/$defs/group" }
+      }
+    }
+  }
+}
