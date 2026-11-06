@@ -35,3 +35,25 @@ npm run dev
 
 Weitere Informationen:
 [Frontend Sprint 1](docs/frontend-sprint1.md)
+
+## Sprint 2: HTTP-API und Frontend-Integration
+
+Es gibt nun ein ausführbares Node.js-Backend (`apps/api`) mit `/api/health`,
+`/api/traces/validate` und einem ausdrücklich noch nicht implementierten
+`/api/generate`-Endpunkt. Das React-Frontend kann die API-Verfügbarkeit anzeigen
+und den geladenen Trace gegen das gemeinsame Schema auf dem Server validieren.
+
+Nach `npm install` in **zwei Terminals** starten:
+
+```bash
+npm run dev:api
+```
+
+```bash
+npm run dev:web
+```
+
+Tests: `npm test`. Details, API-Vertrag und Review-Abgrenzung:
+[Integrationsstand Sprint 2](docs/integration-sprint2.md).
+
+Wichtig: Dies ist eine echte API-Integration, **keine** LLM- oder Sandbox-Implementierung.

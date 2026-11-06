@@ -13,6 +13,9 @@
   },
   "scripts": {
     "test": "node --test",
-    "test:watch": "node --test --watch"
+    "test:watch": "node --test --watch",
+    "dev:api": "npm run dev -w @sepj/api",
+    "dev:web": "npm run dev -w @sepj/web",
+    "build:web": "npm run build -w @sepj/web"
   }
 }
