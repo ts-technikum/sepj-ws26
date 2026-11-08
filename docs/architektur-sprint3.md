@@ -175,9 +175,9 @@ Zustände der Ergebnisfläche: leer, lädt, Rückfrage (Text der Frage plus Hinw
 
 ## Offene Punkte zur Abstimmung
 
-1. `interface-contract.md` Abschnitt 2 und 4 an die neue Bedeutung von `step.line` und `trace.source` anpassen.
+1. ~~`interface-contract.md` an die neue Bedeutung von `step.line` und `trace.source` anpassen~~ (erledigt 08.11.).
 2. Sandbox-Prototyp im Team bestätigen (QuickJS im Worker).
 3. Graph-Rendering im Frontend; bisher werden vor allem Arrays dargestellt.
 4. Ob `scalar` im Renderer eine eigene Darstellung bekommt.
 5. API-Schlüssel beim Betreuer anfragen, sonst bleibt nur der Mock.
-6. `architecture.md` durch dieses Dokument ersetzen oder beide zusammenführen.
+6. ~~`architecture.md` durch dieses Dokument ersetzen~~: `architecture.md` ist als überholt gekennzeichnet und verweist hierher (08.11.).
