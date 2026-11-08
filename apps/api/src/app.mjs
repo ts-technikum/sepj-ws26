@@ -31,12 +31,12 @@ async function readJSON(req) {
 }
 
 // llm: Adapter aus ./llm (siehe createLlmFromEnv). Ohne Angabe läuft der Mock.
-export function createApp({ llm = createMockAdapter() } = {}) {
+export function createApp({ llm = createMockAdapter(), execute } = {}) {
   return createServer(async (req, res) => {
     const path = new URL(req.url || '/', 'http://localhost').pathname;
     try {
       if (req.method === 'GET' && path === '/api/health') {
-        return reply(res, 200, { status: 'ok', service: 'sepj-api', traceVersion: '1.0', llmConnected: llm.provider !== 'mock', llmProvider: llm.provider, llmModel: llm.model, executionEnabled: false });
+        return reply(res, 200, { status: 'ok', service: 'sepj-api', traceVersion: '1.0', llmConnected: llm.provider !== 'mock', llmProvider: llm.provider, llmModel: llm.model, executionEnabled: true });
       }
       if (req.method === 'POST' && path === '/api/traces/validate') {
         const trace = await readJSON(req);
@@ -53,7 +53,7 @@ export function createApp({ llm = createMockAdapter() } = {}) {
       if (req.method === 'POST' && path === '/api/generate') {
         const body = await readJSON(req);
         try {
-          return reply(res, 200, await generate(body, { llm }));
+          return reply(res, 200, await generate(body, { llm, ...(execute ? { execute } : {}) }));
         } catch (error) {
           if (!(error instanceof GenerateError)) throw error;
           return reply(res, error.status, { error: error.code, message: FAILURE_MESSAGE, details: error.details, ...(error.meta ? { meta: error.meta } : {}) });
