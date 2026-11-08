@@ -135,7 +135,7 @@ Ergebnisse landen in `apps/api/eval/results/` als `.md` (Tabelle für das Protok
 Von Hand gelesen in `apps/api/eval/results/2026-11-08T15-*_anthropic.json`. Alle Tests waren grün, trotzdem fallen zwei Dinge auf, die das Skript nicht erkennt:
 
 1. **Falsche Erklärung bei Selection Sort** (`hard-english`): Der Code setzt erst `min = j` und schreibt danach `${a[j]} < ${a[min]}`. Angezeigt wird dadurch z. B. „1 < 1: neues Minimum 1“. Ursache: Die Erklärung wird nach der Zustandsänderung gebildet. Kandidat für v2: Regel „Werte für die Erklärung vor der Änderung festhalten“.
-2. **Unsicherheit bei `params`** (`hard-fibonacci`, 2 Versuche): Der korrigierte Code prüft, ob `input.params` ein Objekt oder eine Liste ist (`p.n !== undefined ? p.n : p.find(...)`). Das Modell liefert `params` als Liste, der Code bekommt aber ein Objekt (siehe `api-generate.md`). Kandidat für v2: im Prompt ausdrücklich sagen, dass der Code `input.params.n` sieht.
+2. **Unsicherheit bei `params`** (`hard-fibonacci`, 2 Versuche): Der korrigierte Code prüft, ob `input.params` ein Objekt oder eine Liste ist (`p.n !== undefined ? p.n : p.find(...)`). Das Modell liefert `params` als Liste, der Code bekommt aber ein Objekt (siehe `api-generate.md`). Der Prompt sagt das bereits („Im Code liest du sie als Objekt: `input.params.n`“), offenbar nicht deutlich genug. Warum der erste Versuch scheiterte, ist nicht protokolliert, weil `meta.repairs` erst danach eingebaut wurde. Kandidat für v2: ein drittes Beispiel mit `scalar` im Prompt.
 
 Die übrigen Erklärungen nennen konkrete Werte und sind verständlich. Rückfragen sind präzise, z. B. bei Start Z: „Der Startknoten Z kommt in den angegebenen Kanten A-B, A-C, B-D nicht vor …“.
 
