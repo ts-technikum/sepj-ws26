@@ -161,7 +161,7 @@ export function createMockAdapter({ script } = {}) {
         next = mockRespond(request);
       }
       const text = typeof next === 'string' ? next : JSON.stringify(next);
-      return { text, assistantContent: text, usage: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0 } };
+      return { text, assistantContent: text, usage: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 } };
     },
   };
 }

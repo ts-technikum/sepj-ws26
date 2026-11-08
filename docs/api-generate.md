@@ -53,7 +53,7 @@ Andere Felder werden mit 400 abgelehnt. Das alte Feld `pseudocode` gibt es nicht
     "promptVersion": "v1.0",
     "attempts": 1,
     "durationMs": 2140,
-    "usage": { "inputTokens": 3120, "outputTokens": 610, "cacheReadTokens": 2900 }
+    "usage": { "inputTokens": 54, "outputTokens": 1362, "cacheReadTokens": 0, "cacheWriteTokens": 0 }
   }
 }
 ```
@@ -68,6 +68,7 @@ Andere Felder werden mit 400 abgelehnt. Das alte Feld `pseudocode` gibt es nicht
 | `trace` | validierter Trace nach `trace.schema.json`. `source` ist der generierte Code, `step.line` die Zeile des `viz.step`-Aufrufs darin (von der Laufzeit gesetzt). `truncated: true`, wenn das Eventlimit gegriffen hat; dann ist der Trace ein Teilergebnis. |
 | `execution` | `enabled` und Dauer der Sandbox in ms |
 | `meta` | für Entwicklung, Evaluation und Kostenkontrolle. `provider: "mock"` heißt: keine KI, feste Antworten |
+| `meta.usage` | Tokens laut Anthropic: `inputTokens` ohne Cache, `cacheReadTokens` aus dem Cache gelesen, `cacheWriteTokens` neu in den Cache geschrieben (System-Prompt), `outputTokens` inklusive Denken. Erster echter Lauf am 08.11.2026 (Bubble Sort, `5, 3, 8, 1`): 1 Versuch, 8,2 s, 54 Eingabe- und 1362 Ausgabe-Tokens. |
 
 ## Antwort bei Rückfrage: `200`, `status: "clarify"`
 

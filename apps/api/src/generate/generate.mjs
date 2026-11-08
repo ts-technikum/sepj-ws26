@@ -91,7 +91,7 @@ export async function generate(body, { llm, execute = runInSandbox, maxAttempts 
 
   const request = { prompt: body.prompt, data: body.data ?? '' };
   const started = now();
-  const usage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0 };
+  const usage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 };
   const meta = (attempts) => ({
     provider: llm.provider, model: llm.model, promptVersion: PROMPT_VERSION,
     attempts, durationMs: now() - started, usage: { ...usage },

@@ -80,6 +80,7 @@ export async function createAnthropicAdapter({ apiKey, effort = 'medium', timeou
           inputTokens: response.usage.input_tokens,
           outputTokens: response.usage.output_tokens,
           cacheReadTokens: response.usage.cache_read_input_tokens ?? 0,
+          cacheWriteTokens: response.usage.cache_creation_input_tokens ?? 0,
         },
       };
     },
