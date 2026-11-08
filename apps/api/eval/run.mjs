@@ -3,6 +3,7 @@
 // Aufruf (im Repo-Wurzelverzeichnis):
 //   npm run eval                              alle Fälle, je einmal
 //   npm run eval -- --only bubble-user,bfs-user
+//   npm run eval -- --set schwer              nur die schwierigen Fälle
 //   npm run eval -- --repeat 3                jeden Fall dreimal (Streuung)
 //
 // Liest apps/api/.env. Ohne .env läuft der Mock (kostenlos, aber keine KI).
@@ -16,18 +17,19 @@ import { PROMPT_VERSION } from '../src/llm/systemPrompt.mjs';
 import { evaluateCase } from './evaluate.mjs';
 
 function parseArgs(argv) {
-  const opts = { only: null, repeat: 1 };
+  const opts = { only: null, repeat: 1, set: null };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--only') opts.only = new Set(argv[++i].split(','));
+    else if (argv[i] === '--set') opts.set = argv[++i];
     else if (argv[i] === '--repeat') opts.repeat = Math.max(1, Number(argv[++i]) || 1);
-    else throw new Error(`Unbekannte Option ${argv[i]}. Erlaubt: --only id,id  --repeat n`);
+    else throw new Error(`Unbekannte Option ${argv[i]}. Erlaubt: --only id,id  --set basis|schwer  --repeat n`);
   }
   return opts;
 }
 
 const opts = parseArgs(process.argv.slice(2));
 const { cases } = JSON.parse(readFileSync(new URL('./cases.json', import.meta.url), 'utf8'));
-const selected = cases.filter((c) => !opts.only || opts.only.has(c.id));
+const selected = cases.filter((c) => (!opts.only || opts.only.has(c.id)) && (!opts.set || c.set === opts.set));
 if (selected.length === 0) throw new Error('Keine Fälle ausgewählt');
 
 const llm = await createLlmFromEnv();
@@ -49,6 +51,7 @@ for (const testCase of selected) {
     const failed = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
     const run = {
       id: testCase.id,
+      set: testCase.set ?? null,
       repeat: r,
       negative: Boolean(testCase.negative),
       pass,
@@ -105,6 +108,10 @@ const md = [
   '',
   `Bestanden ${summary.passed} von ${summary.runs}. Gültig im ersten Versuch: ${summary.firstAttempt}. Fehler: ${summary.errors}. Dauer im Schnitt: ${summary.avgDurationMs} ms.`,
   '',
+  ...[...new Set(runs.map((r) => r.set ?? '-'))].map((set) => {
+    const rs = runs.filter((r) => (r.set ?? '-') === set);
+    return `Teilmenge ${set}: ${rs.filter((r) => r.pass).length} von ${rs.length} bestanden.\n`;
+  }),
   `Tokens: ${summary.tokens.input} Eingabe, ${summary.tokens.cacheRead} aus dem Cache, ${summary.tokens.cacheWrite} in den Cache, ${summary.tokens.output} Ausgabe.`,
   '',
   '| Fall | Ergebnis | Status | Versuche | Dauer ms | Schritte | falsche Prüfungen | Rückfrage oder Fehler |',
