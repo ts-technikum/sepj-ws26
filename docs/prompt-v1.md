@@ -118,4 +118,4 @@ Ergebnisse landen in `apps/api/eval/results/` als `.md` (Tabelle für das Protok
 
 | Version | Datum | Modell | Änderung | Ergebnis |
 | --- | --- | --- | --- | --- |
-| v1.0 | 06.11.2026 | `claude-haiku-5-5` | erste Fassung ohne Pseudocode, freie Wünsche, vier Eingabeformen, Rückfrage, zwei Beispiele | 08.11.: erste Einzeltests mit dem echten Modell, Bubble Sort (`5, 3, 8, 1`) und Breitensuche ab A (`A-B, A-C, B-D`) je im ersten Versuch gültig, 7 bis 8 s. Volle Evaluation steht aus. |
+| v1.0 | 06.11.2026 | `claude-haiku-5-5` | erste Fassung ohne Pseudocode, freie Wünsche, vier Eingabeformen, Rückfrage, zwei Beispiele | 08.11.: erste Einzeltests mit dem echten Modell, Bubble Sort (`5, 3, 8, 1`) und Breitensuche ab A (`A-B, A-C, B-D`) je im ersten Versuch gültig, 7 bis 8 s. Erste volle Evaluation 08.11. (`npm run eval`, effort medium, je 1 Durchlauf): **16 von 16 bestanden, alle im ersten Versuch**, 10 Positivfälle mit `ok`, 6 Negativfälle mit `clarify`. Dauer 1,1 bis 16,5 s, im Schnitt 5,3 s (Binärbaum am längsten). Einschränkung: nur ein Durchlauf, Erklärungen noch nicht von Hand geprüft. |
