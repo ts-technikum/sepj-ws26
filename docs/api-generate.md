@@ -130,6 +130,7 @@ Alle Fehler haben dieselbe Form. Nach außen zeigt die Oberfläche immer `messag
 | 503 | `LLM_UNAVAILABLE` | kein API-Schlüssel, Schlüssel abgelehnt, Anbieter nicht erreichbar | Hinweis an Betreiber |
 | 503 | `LLM_RATE_LIMITED` | Anfragelimit des Anbieters | später erneut versuchen |
 | 504 | `LLM_TIMEOUT` | Anbieter hat nicht rechtzeitig geantwortet | erneut versuchen |
+| 429 | `RATE_LIMITED` | Anfragelimit dieser Instanz (siehe `deployment.md`), mit `Retry-After` | nach der angegebenen Zeit erneut versuchen |
 
 Das Eventlimit (50 000) ist kein Fehler: Die Antwort ist dann `200` mit `trace.truncated: true`, wie in `interface-contract.md` Abschnitt 6 vorgesehen.
 
@@ -144,6 +145,11 @@ Ist die Modellantwort ungültig oder scheitert die Ausführung (Laufzeitfehler m
 | `LLM_PROVIDER` | `mock`, `anthropic` | `mock` |
 | `ANTHROPIC_API_KEY` | Schlüssel der Anthropic API | keiner |
 | `LLM_EFFORT` | `low`, `medium`, `high` | `medium` |
+| `GENERATE_LIMIT_PER_MINUTE` | Anfragen pro IP und Minute, `0` = aus | `10` bei echtem Modell, sonst aus |
+| `GENERATE_LIMIT_PER_DAY` | Anfragen pro Tag insgesamt, `0` = aus | `300` bei echtem Modell, sonst aus |
+| `TRUST_PROXY` | `1` = IP aus `X-Forwarded-For` | aus |
+
+Betrieb, Docker und Hoster: siehe `deployment.md`.
 
 Das Modell ist fest `claude-haiku-5-5` (Teamentscheidung vom 06.11.2026). `@anthropic-ai/sdk` ist in `apps/api/package.json` eingetragen, wird aber nur bei `LLM_PROVIDER=anthropic` geladen. Tests und Mock laufen ohne Netz und ohne Schlüssel.
 
