@@ -9,10 +9,13 @@ const { cases } = JSON.parse(readFileSync(new URL('../eval/cases.json', import.m
 const byId = (id) => cases.find((c) => c.id === id);
 const run = (c) => generate({ prompt: c.prompt, ...(c.data !== undefined ? { data: c.data } : {}) }, { llm: createMockAdapter() });
 
-test('cases.json: eindeutige ids, jede Erwartung hat status', () => {
+test('cases.json: eindeutige ids, jede Erwartung hat status und set', () => {
   const ids = cases.map((c) => c.id);
   assert.equal(new Set(ids).size, ids.length);
-  for (const c of cases) assert.ok(Array.isArray(c.expect.status) && c.expect.status.length > 0, c.id);
+  for (const c of cases) {
+    assert.ok(Array.isArray(c.expect.status) && c.expect.status.length > 0, c.id);
+    assert.ok(['basis', 'schwer'].includes(c.set), c.id);
+  }
 });
 
 test('Bubble Sort vom Mock besteht alle Prüfungen inklusive sortiertem Endzustand', async () => {

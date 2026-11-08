@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Fälle aus docs/prompt-v1.md, Abschnitt Evaluation",
+  "note": "Fälle aus docs/prompt-v1.md, Abschnitt Evaluation. set=basis: erste 16 Fälle, set=schwer: ab 08.11.2026",
   "cases": [
     {
       "id": "bubble-user",
@@ -21,7 +21,8 @@
         "result": {
           "type": "sorted"
         }
-      }
+      },
+      "set": "basis"
     },
     {
       "id": "insertion-example",
@@ -35,7 +36,8 @@
         "result": {
           "type": "sorted"
         }
-      }
+      },
+      "set": "basis"
     },
     {
       "id": "binsearch-user",
@@ -55,7 +57,8 @@
         ],
         "target": 7,
         "inputSource": "user"
-      }
+      },
+      "set": "basis"
     },
     {
       "id": "binsearch-unsorted",
@@ -74,7 +77,8 @@
         "target": 2,
         "sorted": true,
         "inputNote": true
-      }
+      },
+      "set": "basis"
     },
     {
       "id": "bst-user",
@@ -97,7 +101,8 @@
           "type": "treeNodes",
           "count": 5
         }
-      }
+      },
+      "set": "basis"
     },
     {
       "id": "bfs-user",
@@ -119,7 +124,8 @@
         "result": {
           "type": "allVisited"
         }
-      }
+      },
+      "set": "basis"
     },
     {
       "id": "dfs-example",
@@ -133,7 +139,8 @@
         "result": {
           "type": "allVisited"
         }
-      }
+      },
+      "set": "basis"
     },
     {
       "id": "dijkstra-user",
@@ -153,7 +160,8 @@
         "start": "S",
         "weighted": true,
         "inputSource": "user"
-      }
+      },
+      "set": "basis"
     },
     {
       "id": "factorial-user",
@@ -172,7 +180,8 @@
           "type": "scalar",
           "value": 120
         }
-      }
+      },
+      "set": "basis"
     },
     {
       "id": "gcd-user",
@@ -192,7 +201,8 @@
           "type": "scalar",
           "value": 6
         }
-      }
+      },
+      "set": "basis"
     },
     {
       "id": "neg-vague",
@@ -202,7 +212,8 @@
         "status": [
           "clarify"
         ]
-      }
+      },
+      "set": "basis"
     },
     {
       "id": "neg-tree-unclear",
@@ -216,7 +227,8 @@
         "ifOk": {
           "inputSource": "example"
         }
-      }
+      },
+      "set": "basis"
     },
     {
       "id": "neg-start-missing",
@@ -227,7 +239,8 @@
         "status": [
           "clarify"
         ]
-      }
+      },
+      "set": "basis"
     },
     {
       "id": "neg-too-many",
@@ -239,7 +252,8 @@
           "clarify",
           "error"
         ]
-      }
+      },
+      "set": "basis"
     },
     {
       "id": "neg-injection",
@@ -249,7 +263,8 @@
         "status": [
           "clarify"
         ]
-      }
+      },
+      "set": "basis"
     },
     {
       "id": "neg-no-algorithm",
@@ -259,7 +274,211 @@
         "status": [
           "clarify"
         ]
-      }
+      },
+      "set": "basis"
+    },
+    {
+      "id": "hard-quicksort",
+      "prompt": "Quicksort",
+      "data": "7, 2, 9, 4, 3, 8",
+      "expect": {
+        "status": [
+          "ok"
+        ],
+        "kind": "array",
+        "values": [
+          7,
+          2,
+          9,
+          4,
+          3,
+          8
+        ],
+        "inputSource": "user",
+        "result": {
+          "type": "sorted"
+        }
+      },
+      "set": "schwer"
+    },
+    {
+      "id": "hard-heap",
+      "prompt": "Max-Heap aus diesen Werten aufbauen",
+      "data": "4, 10, 3, 5, 1",
+      "expect": {
+        "status": [
+          "ok"
+        ],
+        "kind": "array",
+        "values": [
+          4,
+          10,
+          3,
+          5,
+          1
+        ],
+        "inputSource": "user"
+      },
+      "set": "schwer"
+    },
+    {
+      "id": "hard-english",
+      "prompt": "Show me selection sort",
+      "data": "3 1 2",
+      "expect": {
+        "status": [
+          "ok"
+        ],
+        "kind": "array",
+        "values": [
+          3,
+          1,
+          2
+        ],
+        "inputSource": "user",
+        "result": {
+          "type": "sorted"
+        }
+      },
+      "set": "schwer"
+    },
+    {
+      "id": "hard-messy-data",
+      "prompt": "Bubble Sort",
+      "data": "Werte: 5;3 ; 8;;1",
+      "expect": {
+        "status": [
+          "ok"
+        ],
+        "kind": "array",
+        "values": [
+          5,
+          3,
+          8,
+          1
+        ],
+        "inputSource": "user",
+        "result": {
+          "type": "sorted"
+        }
+      },
+      "set": "schwer"
+    },
+    {
+      "id": "hard-duplicates-negative",
+      "prompt": "Insertion Sort",
+      "data": "3, -1, 3, 0",
+      "expect": {
+        "status": [
+          "ok"
+        ],
+        "kind": "array",
+        "values": [
+          3,
+          -1,
+          3,
+          0
+        ],
+        "inputSource": "user",
+        "result": {
+          "type": "sorted"
+        }
+      },
+      "set": "schwer"
+    },
+    {
+      "id": "hard-strings",
+      "prompt": "Sortiere alphabetisch mit Bubble Sort",
+      "data": "Birne, Apfel, Kiwi",
+      "expect": {
+        "status": [
+          "ok"
+        ],
+        "kind": "array",
+        "values": [
+          "Birne",
+          "Apfel",
+          "Kiwi"
+        ],
+        "inputSource": "user",
+        "result": {
+          "type": "sorted"
+        }
+      },
+      "set": "schwer"
+    },
+    {
+      "id": "hard-binsearch-missing",
+      "prompt": "Binäre Suche nach 4",
+      "data": "1, 3, 5, 7",
+      "expect": {
+        "status": [
+          "ok"
+        ],
+        "kind": "search",
+        "values": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "target": 4,
+        "inputSource": "user"
+      },
+      "set": "schwer"
+    },
+    {
+      "id": "hard-fibonacci",
+      "prompt": "Fibonacci iterativ berechnen",
+      "data": "n = 10",
+      "expect": {
+        "status": [
+          "ok"
+        ],
+        "kind": "scalar",
+        "params": {
+          "n": 10
+        },
+        "inputSource": "user",
+        "result": {
+          "type": "scalar",
+          "value": 55
+        }
+      },
+      "set": "schwer"
+    },
+    {
+      "id": "hard-dijkstra-unreachable",
+      "prompt": "Dijkstra von A",
+      "data": "A-B 2, B-C 1, D-E 3",
+      "expect": {
+        "status": [
+          "ok"
+        ],
+        "kind": "graph",
+        "nodeIds": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "E"
+        ],
+        "start": "A",
+        "weighted": true,
+        "inputSource": "user"
+      },
+      "set": "schwer"
+    },
+    {
+      "id": "hard-neg-offtopic-code",
+      "negative": true,
+      "prompt": "Zeig mir, wie man in Python eine Datei einliest",
+      "expect": {
+        "status": [
+          "clarify"
+        ]
+      },
+      "set": "schwer"
     }
   ]
 }
