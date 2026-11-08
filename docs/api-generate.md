@@ -146,7 +146,9 @@ Ist die Modellantwort ungültig oder scheitert die Ausführung (Laufzeitfehler m
 
 Das Modell ist fest `claude-haiku-5-5` (Teamentscheidung vom 06.11.2026). `@anthropic-ai/sdk` ist in `apps/api/package.json` eingetragen, wird aber nur bei `LLM_PROVIDER=anthropic` geladen. Tests und Mock laufen ohne Netz und ohne Schlüssel.
 
-Start mit echtem Modell: `LLM_PROVIDER=anthropic ANTHROPIC_API_KEY=… npm run dev:api`. Den Schlüssel nie committen.
+Start mit echtem Modell: `apps/api/.env.example` nach `apps/api/.env` kopieren, `ANTHROPIC_API_KEY` eintragen, dann `npm run dev:api`. Die Datei wird beim Start automatisch gelesen (`node --env-file-if-exists`, ab Node 22.9) und steht in `.gitignore`. Den Schlüssel nie committen und nur über einen privaten Kanal weitergeben.
+
+Verbindung prüfen ohne Server: `npm run check:llm` schickt eine Anfrage (Standard: Bubble Sort mit `5, 3, 8, 1`) durch die ganze Kette und zeigt Anbieter, Status, Versuche und Tokens. Eigener Wunsch: `npm run check:llm -- "Breitensuche ab A" "A-B, A-C, B-D"`. Bei einem falschen Schlüssel erscheint `LLM_UNAVAILABLE (503)`.
 
 `GET /api/health` meldet zusätzlich `llmProvider` und `llmModel`, und `executionEnabled` ist jetzt `true`. `llmConnected` ist nur bei einem echten Anbieter `true`.
 
