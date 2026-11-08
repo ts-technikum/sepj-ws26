@@ -61,6 +61,7 @@ for (const testCase of selected) {
       attempts: response.meta?.attempts ?? null,
       durationMs: response.meta?.durationMs ?? Date.now() - started,
       usage: response.meta?.usage ?? null,
+      repairs: response.meta?.repairs ?? [],
       checks,
       algorithm: response.algorithm ?? null,
       inputSource: response.inputSource ?? null,
@@ -114,10 +115,10 @@ const md = [
   }),
   `Tokens: ${summary.tokens.input} Eingabe, ${summary.tokens.cacheRead} aus dem Cache, ${summary.tokens.cacheWrite} in den Cache, ${summary.tokens.output} Ausgabe.`,
   '',
-  '| Fall | Ergebnis | Status | Versuche | Dauer ms | Schritte | falsche Prüfungen | Rückfrage oder Fehler |',
+  '| Fall | Ergebnis | Status | Versuche | Dauer ms | Schritte | falsche Prüfungen | Rückfrage, Fehler oder Grund der Korrektur |',
   '| --- | --- | --- | --- | --- | --- | --- | --- |',
   ...runs.map((r) => {
-    const note = r.question ?? (r.details ? `${r.errorCode}: ${r.details[0]}` : '-');
+    const note = r.question ?? (r.details ? `${r.errorCode}: ${r.details[0]}` : r.repairs.length ? `Korrektur: ${r.repairs[0][0]}` : '-');
     return `| ${r.id}${opts.repeat > 1 ? ` #${r.repeat}` : ''} | ${r.pass ? 'bestanden' : 'nicht bestanden'} | ${r.status} | ${r.attempts ?? '-'} | ${r.durationMs} | ${r.steps ?? '-'} | ${r.failedChecks.join(', ') || '-'} | ${cell(note)} |`;
   }),
   '',

@@ -120,6 +120,8 @@ test('Abgelehnte Antwort wird mit konkreter Meldung zurückgegeben und korrigier
     const body = await (await generate(base, { prompt: 'Sort' })).json();
     assert.equal(body.status, 'ok');
     assert.equal(body.meta.attempts, 2);
+    assert.equal(body.meta.repairs.length, 1, 'Grund der Korrektur steht in meta.repairs');
+    assert.match(body.meta.repairs[0].join(' '), /fetch/);
   });
   const repair = seen[1].at(-1);
   assert.equal(repair.role, 'user');

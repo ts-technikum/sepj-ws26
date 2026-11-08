@@ -136,7 +136,7 @@ Das Eventlimit (50 000) ist kein Fehler: Die Antwort ist dann `200` mit `trace.t
 
 ## Korrekturrunde
 
-Ist die Modellantwort ungültig oder scheitert die Ausführung (Laufzeitfehler mit Zeile, Zeitlimit, Speicherlimit, ungültiger Trace), schickt das Backend die konkreten Meldungen zurück an das Modell und fragt einmal erneut (insgesamt höchstens 2 Versuche, `LIMITS.maxAttempts`). Die Meldungen nennen immer die erlaubten Alternativen, wie in `interface-contract.md` Abschnitt 6 vorgesehen. `meta.attempts` zeigt, wie viele Versuche nötig waren. Das ist eine Messgröße für die Prompt-Evaluation.
+Ist die Modellantwort ungültig oder scheitert die Ausführung (Laufzeitfehler mit Zeile, Zeitlimit, Speicherlimit, ungültiger Trace), schickt das Backend die konkreten Meldungen zurück an das Modell und fragt einmal erneut (insgesamt höchstens 2 Versuche, `LIMITS.maxAttempts`). Die Meldungen nennen immer die erlaubten Alternativen, wie in `interface-contract.md` Abschnitt 6 vorgesehen. `meta.attempts` zeigt, wie viele Versuche nötig waren. `meta.repairs` enthält pro Korrekturrunde die Meldungen, die an das Modell zurückgingen (leer, wenn der erste Versuch gültig war). Das ist eine Messgröße für die Prompt-Evaluation.
 
 ## Konfiguration des Backends
 
