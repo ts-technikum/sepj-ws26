@@ -35,10 +35,12 @@ test('unzulässige und fehlerhafte Eingaben werden zurückgewiesen', () => withA
   assert.equal((await fetch(base + '/api/traces/validate')).status,405);
   assert.equal((await fetch(base + '/does-not-exist')).status,404);
 }));
-test('LLM-Endpunkt behauptet keine nicht existierende Integration', () => withApi(async base => {
+test('Generate lehnt das alte Pseudocode-Format ab', () => withApi(async base => {
   const res = await post(base + '/api/generate', {pseudocode:'sortiere'});
-  assert.equal(res.status,501);
-  assert.equal((await res.json()).error,'NOT_IMPLEMENTED');
+  assert.equal(res.status,400);
+  const body = await res.json();
+  assert.equal(body.error,'INVALID_REQUEST');
+  assert.equal(body.message,'Visualisierung gescheitert');
 }));
 test('Event-Limit verhindert zu große Trace-Verarbeitung', () => withApi(async base => {
   const events = Array.from({length:10001}, (_,i)=>({op:'step',group:i}));
