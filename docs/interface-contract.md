@@ -6,13 +6,16 @@ Dieses Dokument ist gleichzeitig die Vorlage für das Prompt-Design und die
 Vorgabe, gegen die Renderer und Ausführung unabhängig voneinander entwickelt
 werden können.
 
-Stand: Sprint 1, Version 1.0 des Trace-Formats. Jede Änderung hier betrifft
-alle drei Teilbereiche und muss im Team abgestimmt werden.
+Stand: Sprint 1, Version 1.0 des Trace-Formats. Angepasst am 08.11.2026 an den
+Ansatz ohne Pseudocode (freier Wunsch der Lehrperson, siehe `api-generate.md`):
+Bedeutung von `line` und `source`, Zuständigkeiten, offene Punkte. Das
+Trace-Format selbst ist unverändert. Jede Änderung hier betrifft alle
+Teilbereiche und muss im Team abgestimmt werden.
 
 | Bereich | Zuständig | Liest diesen Vertrag als |
 | --- | --- | --- |
 | LLM-Pipeline | Serhat | Vorgabe, was in den Prompt gehört |
-| Ausführung und Sandbox | Pascal | Vorgabe, was die Laufzeit bereitstellt |
+| Ausführung und Sandbox | Serhat (bis 11/2026 Pascal) | Vorgabe, was die Laufzeit bereitstellt |
 | Renderer und Oberfläche | Tina | Vorgabe, was anzuzeigen ist |
 
 ## 1. Was das Modell liefern muss
@@ -36,8 +39,10 @@ Verfügbar sind ausschließlich:
 - **`viz`** — die Visualisierungs-API aus Abschnitt 2
 
 Alles andere ist verboten: `require`, `import`, `fetch`, `XMLHttpRequest`,
-`process`, Dateisystem, DOM, Timer, `eval`. Die Laufzeit entfernt diese
-Zugriffe vor der Ausführung; ein Versuch führt zum Abbruch des Laufs.
+`process`, Dateisystem, DOM, Timer, `eval`. Das Backend lehnt Code mit diesen
+Bezeichnern vor der Ausführung ab (`checkCode.mjs`, die Meldung geht in die
+Korrekturrunde). Unabhängig davon stellt die Sandbox (QuickJS im Worker) diese
+Funktionen gar nicht bereit.
 
 Das Modell darf den Zustand in eigenen Variablen führen — im Beispiel oben das
 Array `a`. Es muss jede für die Darstellung relevante Änderung zusätzlich über
@@ -94,9 +99,14 @@ Der Name bei `pointer` ist frei wählbar und wird als Beschriftung angezeigt.
 | --- | --- |
 | `viz.step({line, explanation})` | schließt den aktuellen Schritt ab |
 
-`line` ist die 1-basierte Zeile im eingegebenen Pseudocode, `explanation` ein
-kurzer Satz in der Sprache des Nutzers. Beide sind optional, sollten aber
-immer gesetzt werden — sie sind der didaktische Kern.
+`explanation` ist ein kurzer Satz in der Sprache des Nutzers mit konkreten
+Werten und der didaktische Kern jedes Schritts. Das Modell setzt nur
+`explanation`.
+
+`line` setzt die Laufzeit selbst: Es ist die 1-basierte Zeile des
+`viz.step`-Aufrufs im generierten Code (`trace.source`). Ein vom Modell
+gesetztes `line` wird ignoriert. Früher war `line` die Zeile im eingegebenen
+Pseudocode; den gibt es seit Sprint 3 nicht mehr.
 
 ## 3. Festes Vokabular
 
@@ -145,13 +155,15 @@ Schnittstelle zum Renderer.
 {
   "version": "1.0",
   "algorithm": "Bubble Sort",
-  "source": "für jedes Paar ...",
+  "source": "const a = [...input.values];\n...",
   "events": [ ... ],
   "truncated": false
 }
 ```
 
-Der Rahmen wird von der Ausführung ergänzt, nicht vom generierten Code.
+Der Rahmen wird vom Backend ergänzt, nicht vom generierten Code (`buildTrace`
+in `generate.mjs`). `algorithm` ist der vom Modell gewählte Anzeigename,
+`source` der generierte Code, auf den sich `step.line` bezieht.
 `truncated` ist `true`, wenn ein Limit aus Abschnitt 6 gegriffen hat.
 
 ### Event-Typen
@@ -222,8 +234,8 @@ sonst schlägt der Test an.
 | Grenze | Vorgabe | Reaktion |
 | --- | --- | --- |
 | Anzahl Events | 50 000 | Abbruch, `truncated: true` |
-| Laufzeit | siehe Ausführungskomponente | Abbruch des Workers |
-| Speicher | siehe Ausführungskomponente | Abbruch des Workers |
+| Laufzeit | 2 s (QuickJS-Interrupt), harter Abbruch nach weiteren 1,5 s | Abbruch des Workers, `SANDBOX_TIMEOUT` |
+| Speicher | 32 MB in QuickJS | Abbruch, `SANDBOX_MEMORY` |
 
 Das Eventlimit fängt Endlosschleifen ab, die zeichnen. Nicht zeichnende
 Endlosschleifen fängt das Zeitlimit ab, indem der Worker hart beendet wird.
@@ -263,11 +275,9 @@ vergleicht beide und schlägt an, sobald sie auseinanderlaufen.
 
 ## 8. Offene Punkte
 
-- **Form von `input`.** Die Kategorien Array, Suche, Graph und Skalar sind in
-  `prompt-engineering.md` beschrieben, die konkrete Objektform ist noch nicht
-  festgelegt. Gehört zur Eingabevalidierung und ist mit Serhat abzustimmen.
-- **Rahmen des Trace.** Die Laufzeit liefert bisher nur das `events`-Array.
-  Version, Algorithmusname und Pseudocode ergänzt die Ausführungskomponente.
+- ~~Form von `input`~~: festgelegt in `api-generate.md` (`array`, `search`,
+  `graph`, `scalar`, mit Grenzen), geprüft von `validateInput.mjs`.
+- ~~Rahmen des Trace~~: ergänzt das Backend, siehe Abschnitt 4.
 - **Tiefensuche.** Der Zustand „liegt auf dem Stapel, wir sind aber schon
   tiefer" wird derzeit über `frontier` abgebildet. Falls das in der Darstellung
   nicht reicht, braucht es einen eigenen Wert.

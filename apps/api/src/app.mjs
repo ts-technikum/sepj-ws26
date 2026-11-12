@@ -30,8 +30,20 @@ async function readJSON(req) {
   catch { const err = new Error('Ungültiges JSON'); err.status = 400; throw err; }
 }
 
+function clientIp(req, trustProxy) {
+  if (trustProxy) {
+    const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+    if (forwarded) return forwarded;
+  }
+  return req.socket.remoteAddress || 'unbekannt';
+}
+
 // llm: Adapter aus ./llm (siehe createLlmFromEnv). Ohne Angabe läuft der Mock.
-export function createApp({ llm = createMockAdapter(), execute } = {}) {
+// execute: Ersatz für die Sandbox in Tests.
+// serveStatic: aus ./static.mjs, liefert das gebaute Frontend aus (nur im Betrieb).
+// rateLimit: aus ./rateLimit.mjs, begrenzt /api/generate (nur im Betrieb).
+// trustProxy: true, wenn ein Reverse-Proxy davor sitzt und X-Forwarded-For setzt.
+export function createApp({ llm = createMockAdapter(), execute, serveStatic, rateLimit, trustProxy = false } = {}) {
   return createServer(async (req, res) => {
     const path = new URL(req.url || '/', 'http://localhost').pathname;
     try {
@@ -51,6 +63,17 @@ export function createApp({ llm = createMockAdapter(), execute } = {}) {
         });
       }
       if (req.method === 'POST' && path === '/api/generate') {
+        if (rateLimit) {
+          const limit = rateLimit(clientIp(req, trustProxy));
+          if (!limit.ok) {
+            res.setHeader('Retry-After', String(limit.retryAfterS));
+            return reply(res, 429, {
+              error: 'RATE_LIMITED',
+              message: limit.scope === 'day' ? 'Tageslimit erreicht, bitte morgen erneut versuchen' : 'Zu viele Anfragen, bitte in einer Minute erneut versuchen',
+              details: [],
+            });
+          }
+        }
         const body = await readJSON(req);
         try {
           return reply(res, 200, await generate(body, { llm, ...(execute ? { execute } : {}) }));
@@ -63,6 +86,7 @@ export function createApp({ llm = createMockAdapter(), execute } = {}) {
         res.setHeader('Allow', path === '/api/health' ? 'GET' : 'POST');
         return reply(res, 405, { error: 'METHOD_NOT_ALLOWED' });
       }
+      if (serveStatic && !path.startsWith('/api/') && serveStatic(req, res, path)) return;
       reply(res, 404, { error: 'NOT_FOUND' });
     } catch (error) {
       reply(res, error.status || 500, { error: error.status ? 'INVALID_REQUEST' : 'INTERNAL_ERROR', message: error.status ? error.message : 'Interner Serverfehler' });

@@ -1,5 +1,7 @@
 # Prompt-Engineering-Konzept
 
+> **Überholt seit Sprint 3 (06.11.2026).** Dieses Konzept geht noch von Pseudocode als Eingabe aus. Der aktuelle Prompt, seine Begründung, die Evaluation und das Änderungsprotokoll stehen in [`prompt-v1.md`](prompt-v1.md). Die Gliederung in Laufzeit-, Visualisierungs-, Eingabe-, Schritt- und Sicherheitsvertrag wurde dort übernommen.
+
 ## Ziel
 
 Prompts übersetzen Pseudocode und validierte Eingabedaten in Code, der den Visualisierungsvertrag einhält. Die Bewertung erfolgt über Endergebnis und nachvollziehbare Zwischenschritte.
