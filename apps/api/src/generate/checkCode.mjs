@@ -1,7 +1,7 @@
 // Statische Prüfung des generierten Codes vor der Ausführung.
 //
 // Das ist KEINE Sicherheitsgrenze. Die Sicherheit kommt aus der Sandbox
-// (Sprint 4). Diese Prüfung fängt früh und billig ab, was sich durch eine
+// (apps/api/src/sandbox). Diese Prüfung fängt früh und billig ab, was sich durch eine
 // Korrekturrunde beheben lässt: Syntaxfehler, verbotene Bezeichner,
 // unbekannte viz-Aufrufe. Wörter werden auch in Strings und Kommentaren
 // abgelehnt; das ist bewusst streng und steht so im Prompt.

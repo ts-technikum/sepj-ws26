@@ -47,7 +47,7 @@ Zeig mir Bubble Sort
 
 **Rückfrage statt Raten.** Bei unklaren oder nicht darstellbaren Wünschen liefert das Modell `status: "clarify"` mit genau einer Frage. Das war schon in `prompt-engineering.md` vorgesehen.
 
-**Keine Zeilennummern vom Modell.** `viz.step` bekommt nur `explanation`. Modelle zählen Zeilen in ihrem eigenen Code unzuverlässig, und ohne Pseudocode gibt es keine Lehrenden-Zeilen mehr. Vorschlag für Sprint 4: Die Laufzeit ermittelt die Zeile des `viz.step`-Aufrufs selbst aus dem Stack und trägt sie in `step.line` ein. `trace.source` enthält dann den generierten Code. Das Schema muss dafür nicht geändert werden, nur die Beschreibung von `source` und `line` in `interface-contract.md`.
+**Keine Zeilennummern vom Modell.** `viz.step` bekommt nur `explanation`. Modelle zählen Zeilen in ihrem eigenen Code unzuverlässig, und ohne Pseudocode gibt es keine Lehrenden-Zeilen mehr. Die Sandbox ermittelt die Zeile des `viz.step`-Aufrufs selbst aus dem Stack und trägt sie in `step.line` ein. `trace.source` enthält den generierten Code. Das Schema musste dafür nicht geändert werden, nur die Beschreibung von `source` und `line` in `interface-contract.md` ist noch anzupassen.
 
 **Strenge Wortliste.** Verbotene Bezeichner werden auch in Strings und Kommentaren abgelehnt. Das ist bewusst einfach und führt selten zu falschen Treffern. Ein falscher Treffer kostet nur eine Korrekturrunde. Die eigentliche Sicherheit kommt aus der Sandbox, nicht aus dieser Liste.
 
@@ -70,7 +70,7 @@ Antworten mit `stop_reason: "refusal"` werden als `LLM_REFUSED` gemeldet. Für H
 
 ## Evaluation (Plan für Sprint 3 und 4)
 
-Jede Prompt-Version wird gegen dieselben Fälle laufen gelassen. Messgrößen pro Fall: gültige Antwort im ersten Versuch, Versuche gesamt, Eingabe korrekt übernommen, Trace gültig (ab Sprint 4), fachlich richtiges Ergebnis, Verständlichkeit der Erklärungen (Stichprobe von Hand), Tokens und Dauer.
+Jede Prompt-Version wird gegen dieselben Fälle laufen gelassen. Messgrößen pro Fall: gültige Antwort im ersten Versuch, Versuche gesamt, Eingabe korrekt übernommen, Trace gültig, fachlich richtiges Ergebnis, Verständlichkeit der Erklärungen (Stichprobe von Hand), Tokens und Dauer.
 
 Positivfälle:
 

@@ -1,13 +1,13 @@
 # Vertrag für `POST /api/generate`
 
-Stand: 06.11.2026, Sprint 3, Entwurf von Serhat zur Abstimmung mit Tina.
+Stand: 08.11.2026, Sprint 3 plus Sandbox-Prototyp, Entwurf von Serhat zur Abstimmung mit Tina.
 Implementierung: `apps/api/src/generate/generate.mjs`, Tests: `apps/api/test/generate.test.mjs`.
 
 ## Zweck
 
 Die Lehrperson beschreibt frei, welchen Algorithmus oder welche Datenstruktur sie sehen möchte, und gibt optional eigene Daten an. Das Backend lässt daraus vom Modell ein Eingabeobjekt `input` und einen JavaScript-Anweisungsblock erzeugen, der nur die viz-API nutzt, und prüft beides. Es gibt keinen Pseudocode mehr als Eingabe.
 
-In Sprint 3 endet der Ablauf nach der Code-Prüfung. Die Ausführung in der Sandbox und damit der Trace kommen in Sprint 4 dazu. Die Antwort enthält dafür schon die Felder `trace` und `execution`, damit das Frontend sich nicht noch einmal umstellen muss.
+Nach der Prüfung führt das Backend den Code in der Sandbox aus (QuickJS in einem `worker_thread`, siehe `architektur-sprint3.md`), baut daraus den Trace und prüft ihn gegen `trace.schema.json`. Die Antwort enthält also einen abspielbaren Trace.
 
 ## Anfrage
 
@@ -39,15 +39,21 @@ Andere Felder werden mit 400 abgelehnt. Das alte Feld `pseudocode` gibt es nicht
   "inputSource": "user",
   "inputNote": "",
   "code": "const a = [...input.values];\nviz.array('a', a);\n...",
-  "trace": null,
-  "execution": { "enabled": false, "reason": "Die Sandbox folgt in Sprint 4." },
+  "trace": {
+    "version": "1.0",
+    "algorithm": "Bubble Sort",
+    "source": "const a = [...input.values];\n...",
+    "events": [ { "op": "array", "id": "a", "values": [5, 3, 8, 1], "prev": null, "group": 0 }, "..." ],
+    "truncated": false
+  },
+  "execution": { "enabled": true, "durationMs": 74 },
   "meta": {
     "provider": "anthropic",
     "model": "claude-haiku-5-5",
     "promptVersion": "v1.0",
     "attempts": 1,
     "durationMs": 2140,
-    "usage": { "inputTokens": 3120, "outputTokens": 610, "cacheReadTokens": 2900 }
+    "usage": { "inputTokens": 54, "outputTokens": 1362, "cacheReadTokens": 0, "cacheWriteTokens": 0 }
   }
 }
 ```
@@ -59,9 +65,10 @@ Andere Felder werden mit 400 abgelehnt. Das alte Feld `pseudocode` gibt es nicht
 | `inputSource` | `user`: Daten der Lehrperson übernommen. `example`: keine Daten angegeben, Modell hat ein Beispiel gewählt. Das Frontend soll `example` sichtbar machen. |
 | `inputNote` | ein Satz, was mit den Daten passiert ist (z. B. „Die Werte wurden aufsteigend sortiert …“), sonst leer |
 | `code` | geprüfter Anweisungsblock, nur zur Anzeige und für die Sandbox |
-| `trace` | Sprint 3: immer `null`. Ab Sprint 4: der validierte Trace nach `trace.schema.json` |
-| `execution` | ob die Sandbox gelaufen ist |
+| `trace` | validierter Trace nach `trace.schema.json`. `source` ist der generierte Code, `step.line` die Zeile des `viz.step`-Aufrufs darin (von der Laufzeit gesetzt). `truncated: true`, wenn das Eventlimit gegriffen hat; dann ist der Trace ein Teilergebnis. |
+| `execution` | `enabled` und Dauer der Sandbox in ms |
 | `meta` | für Entwicklung, Evaluation und Kostenkontrolle. `provider: "mock"` heißt: keine KI, feste Antworten |
+| `meta.usage` | Tokens laut Anthropic: `inputTokens` ohne Cache, `cacheReadTokens` aus dem Cache gelesen, `cacheWriteTokens` neu in den Cache geschrieben (System-Prompt), `outputTokens` inklusive Denken. Erster echter Lauf am 08.11.2026 (Bubble Sort, `5, 3, 8, 1`): 1 Versuch, 8,2 s, 54 Eingabe- und 1362 Ausgabe-Tokens. |
 
 ## Antwort bei Rückfrage: `200`, `status: "clarify"`
 
@@ -112,6 +119,11 @@ Alle Fehler haben dieselbe Form. Nach außen zeigt die Oberfläche immer `messag
 | 413 | `INVALID_REQUEST` | Anfrage größer als 1 MiB | Daten kürzen |
 | 415 | `INVALID_REQUEST` | falscher Content-Type | Fehler im Client |
 | 422 | `GENERATION_FAILED` | Modellantwort auch nach der Korrekturrunde ungültig (kein JSON, falsches `input`, verbotener Code, unbekannte viz-Methode, Syntaxfehler) | „Erneut versuchen“ anbieten |
+| 422 | `SANDBOX_RUNTIME_ERROR` | Ausnahme im generierten Code, auch nach der Korrekturrunde | „Erneut versuchen“ anbieten |
+| 422 | `SANDBOX_TIMEOUT` | Code läuft länger als 2 s (z. B. Endlosschleife) | „Erneut versuchen“ anbieten |
+| 422 | `SANDBOX_MEMORY` | Code braucht mehr als 32 MB | „Erneut versuchen“ anbieten |
+| 422 | `TRACE_INVALID` | Trace verletzt das Schema | „Erneut versuchen“ anbieten |
+| 500 | `SANDBOX_INTERNAL` | Fehler der Sandbox selbst, keine Korrekturrunde | Fehler im Backend melden |
 | 422 | `LLM_REFUSED` | Sicherheitsfilter des Modells hat abgelehnt | Wunsch umformulieren |
 | 502 | `LLM_TRUNCATED` | Antwort abgeschnitten | erneut versuchen |
 | 502 | `LLM_ERROR` | sonstiger Fehler beim Anbieter | später erneut versuchen |
@@ -119,11 +131,11 @@ Alle Fehler haben dieselbe Form. Nach außen zeigt die Oberfläche immer `messag
 | 503 | `LLM_RATE_LIMITED` | Anfragelimit des Anbieters | später erneut versuchen |
 | 504 | `LLM_TIMEOUT` | Anbieter hat nicht rechtzeitig geantwortet | erneut versuchen |
 
-Ab Sprint 4 kommen die Ausführungsfehler aus `interface-contract.md` Abschnitt 6 dazu (Laufzeitfehler, Zeitüberschreitung, Eventlimit, ungültiger Trace). Sie bekommen eigene `error`-Codes nach demselben Muster.
+Das Eventlimit (50 000) ist kein Fehler: Die Antwort ist dann `200` mit `trace.truncated: true`, wie in `interface-contract.md` Abschnitt 6 vorgesehen.
 
 ## Korrekturrunde
 
-Ist die Modellantwort ungültig, schickt das Backend die konkreten Meldungen zurück an das Modell und fragt einmal erneut (insgesamt höchstens 2 Versuche, `LIMITS.maxAttempts`). Die Meldungen nennen immer die erlaubten Alternativen, wie in `interface-contract.md` Abschnitt 6 vorgesehen. `meta.attempts` zeigt, wie viele Versuche nötig waren. Das ist eine Messgröße für die Prompt-Evaluation.
+Ist die Modellantwort ungültig oder scheitert die Ausführung (Laufzeitfehler mit Zeile, Zeitlimit, Speicherlimit, ungültiger Trace), schickt das Backend die konkreten Meldungen zurück an das Modell und fragt einmal erneut (insgesamt höchstens 2 Versuche, `LIMITS.maxAttempts`). Die Meldungen nennen immer die erlaubten Alternativen, wie in `interface-contract.md` Abschnitt 6 vorgesehen. `meta.attempts` zeigt, wie viele Versuche nötig waren. Das ist eine Messgröße für die Prompt-Evaluation.
 
 ## Konfiguration des Backends
 
@@ -133,9 +145,13 @@ Ist die Modellantwort ungültig, schickt das Backend die konkreten Meldungen zur
 | `ANTHROPIC_API_KEY` | Schlüssel der Anthropic API | keiner |
 | `LLM_EFFORT` | `low`, `medium`, `high` | `medium` |
 
-Das Modell ist fest `claude-haiku-5-5` (Teamentscheidung vom 06.11.2026). Für `anthropic` muss einmalig `npm install @anthropic-ai/sdk -w @sepj/api` laufen; das Paket ist absichtlich noch nicht in `package.json` eingetragen, damit Tests und Mock ohne Netz laufen. Das tragen wir ein, sobald der Schlüssel da ist.
+Das Modell ist fest `claude-haiku-5-5` (Teamentscheidung vom 06.11.2026). `@anthropic-ai/sdk` ist in `apps/api/package.json` eingetragen, wird aber nur bei `LLM_PROVIDER=anthropic` geladen. Tests und Mock laufen ohne Netz und ohne Schlüssel.
 
-`GET /api/health` meldet zusätzlich `llmProvider` und `llmModel`. `llmConnected` ist nur bei einem echten Anbieter `true`.
+Start mit echtem Modell: `apps/api/.env.example` nach `apps/api/.env` kopieren, `ANTHROPIC_API_KEY` eintragen, dann `npm run dev:api`. Die Datei wird beim Start automatisch gelesen (`node --env-file-if-exists`, ab Node 22.9) und steht in `.gitignore`. Den Schlüssel nie committen und nur über einen privaten Kanal weitergeben.
+
+Verbindung prüfen ohne Server: `npm run check:llm` schickt eine Anfrage (Standard: Bubble Sort mit `5, 3, 8, 1`) durch die ganze Kette und zeigt Anbieter, Status, Versuche und Tokens. Eigener Wunsch: `npm run check:llm -- "Breitensuche ab A" "A-B, A-C, B-D"`. Bei einem falschen Schlüssel erscheint `LLM_UNAVAILABLE (503)`.
+
+`GET /api/health` meldet zusätzlich `llmProvider` und `llmModel`, und `executionEnabled` ist jetzt `true`. `llmConnected` ist nur bei einem echten Anbieter `true`.
 
 ## Beispiel mit curl
 
@@ -151,4 +167,5 @@ curl -s -X POST http://127.0.0.1:3001/api/generate \
 - `status` auswerten: `ok` (Code und später Trace anzeigen), `clarify` (Frage anzeigen).
 - Bei Fehlern `message` anzeigen und `details` ausklappbar für Entwicklung.
 - `inputSource: "example"` sichtbar machen, z. B. „Beispieldaten, weil keine angegeben wurden“.
-- Solange `trace` `null` ist, nur Code und `input` anzeigen.
+- `trace` direkt an die vorhandene Wiedergabe geben. Bei `trace.truncated` einen Hinweis „Teilergebnis“ zeigen.
+- Graph-Events kommen jetzt wirklich vor (z. B. Binärbaum), dafür braucht der Renderer die Graph-Darstellung.

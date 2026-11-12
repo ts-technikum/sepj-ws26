@@ -8,7 +8,7 @@ Stand: 06.11.2026. Entwurf von Serhat zur Abstimmung mit Tina. Ergänzt `archite
 | --- | --- |
 | Lehrperson gibt Pseudocode und Daten ein | Lehrperson gibt einen freien Wunsch und optional Daten ein |
 | Eingabeform wird vorab gewählt | Das Modell wählt die Form von `input`, das Backend prüft sie |
-| `step.line` = Zeile im Pseudocode | `step.line` = Zeile im generierten Code, ermittelt von der Laufzeit (Vorschlag für Sprint 4) |
+| `step.line` = Zeile im Pseudocode | `step.line` = Zeile im generierten Code, ermittelt von der Laufzeit (umgesetzt in der Sandbox) |
 | `trace.source` = Pseudocode | `trace.source` = generierter Code |
 | Fehlerfälle getrennt angezeigt | nach außen immer „Visualisierung gescheitert“, intern getrennte Codes |
 
@@ -32,7 +32,7 @@ flowchart LR
     AD[LLM-Adapter]
     VI[validateInput]
     CC[checkCode]
-    SB[Sandbox-Gateway, Sprint 4]
+    SB[Sandbox: QuickJS im worker_thread]
     TV[Trace-Validator]
   end
 
@@ -51,9 +51,9 @@ flowchart LR
   AD -->|LLM_PROVIDER=mock| MOCK
   G --> VI
   G --> CC
-  G -. Sprint 4 .-> SB
-  SB -. nutzt .-> VA
-  SB -. Trace .-> TV
+  G --> SB
+  SB -->|nutzt| VA
+  G -->|Trace| TV
   TV --> TS
   PR -->|Vokabular| TS
   G -->|JSON-Antwort| CL --> PB --> CV
@@ -68,7 +68,7 @@ flowchart LR
 | LLM-Adapter | `apps/api/src/llm/adapters/*.mjs` | einheitliche Schnittstelle `complete({ system, messages })` | neu: `anthropic`, `mock` |
 | Eingabeprüfung | `apps/api/src/generate/validateInput.mjs` | Formen, Grenzen, Querbezüge, Normalisierung | neu |
 | Code-Prüfung | `apps/api/src/generate/checkCode.mjs` | Syntax, verbotene Bezeichner, erlaubte viz-Methoden | neu |
-| Sandbox-Gateway | noch offen | Code isoliert mit Zeit-, Speicher- und Eventlimit ausführen | Sprint 4 |
+| Sandbox | `apps/api/src/sandbox/sandbox.mjs`, `worker.mjs` | Code isoliert mit Zeit-, Speicher- und Eventlimit ausführen, `step.line` setzen | Prototyp |
 | Trace-Validator | `packages/trace-schema` | Trace gegen Schema prüfen | vorhanden |
 | viz-Laufzeit | `packages/visualization-api` | Aufrufe aufzeichnen, `prev` ergänzen | vorhanden, `viz.graph` kopiert jetzt die Listen ins Event |
 
@@ -81,7 +81,7 @@ sequenceDiagram
   participant A as /api/generate
   participant M as LLM-Adapter
   participant P as Prüfungen
-  participant S as Sandbox (Sprint 4)
+  participant S as Sandbox
 
   L->>W: Wunsch "Bubble Sort", Daten "5, 3, 8, 1"
   W->>A: POST { prompt, data }
@@ -98,8 +98,9 @@ sequenceDiagram
     A-->>W: 200 { status: "clarify", question }
     W-->>L: Rückfrage anzeigen
   else gültig
-    A-)S: code + input (ab Sprint 4)
-    S-->>A: Trace oder Ausführungsfehler
+    A->>S: code + input
+    S-->>A: Events oder Ausführungsfehler (Fehler gehen in die Korrekturrunde)
+    A->>A: Trace bauen und gegen Schema prüfen
     A-->>W: 200 { status: "ok", input, code, trace }
     W-->>L: Schritte abspielen
   else endgültig ungültig
@@ -108,17 +109,25 @@ sequenceDiagram
   end
 ```
 
-## Sandbox (Planung für Sprint 4)
+## Sandbox (Prototyp, Stand 08.11.)
 
-Noch nicht entschieden. Der Vorschlag aus `technologieauswahl.md` vom 13.10. ist weiterhin der naheliegende Weg und wird hier nur als Ausgangspunkt genannt:
+Umgesetzt nach dem Vorschlag aus `technologieauswahl.md` vom 13.10.:
 
-- Ausführung in einem eigenen `worker_thread` mit hartem Abbruch nach einer Zeitgrenze (deckt Endlosschleifen ab, die nicht zeichnen).
-- Im Worker eine JavaScript-Engine ohne Zugriff auf Node, z. B. `quickjs-emscripten`. Ein Prototyp liegt in den Projektdateien unter `technologie/quickjs-prototyp.mjs`.
-- In der Engine nur `input` und eine `viz`-Brücke, die die Aufrufe an `createViz` weitergibt. Das Eventlimit (50 000) greift dort.
-- Der Code wird in einen Fehlerhandler gelegt; jeder Fehler wird zu einem internen Fehlercode und nach außen zu „Visualisierung gescheitert“.
-- Der Trace geht als JSON zurück und durch denselben Validator wie `/api/traces/validate`.
+| Schicht | Was sie leistet |
+| --- | --- |
+| QuickJS (`quickjs-emscripten` 0.32.0, WebAssembly) | eigene JavaScript-Engine ohne Node-, Netz-, Datei- oder Timer-APIs. Speicherlimit 32 MB, Stack 1 MB, Zeitlimit 2 s über einen Interrupt-Handler. Nur JSON verlässt die Engine. |
+| `worker_thread` | eigener Thread ohne Umgebungsvariablen (`env: {}`), damit der API-Schlüssel nicht erreichbar ist. Der Hauptthread beendet ihn hart nach 2 s plus 1,5 s Puffer, falls QuickJS nicht rechtzeitig abbricht. |
+| viz-Laufzeit | dieselbe `createViz` wie im Paket, als Skript in QuickJS geladen. Eventlimit 50 000, danach Teilergebnis mit `truncated: true`. |
 
-`new Function` im Backend dient in Sprint 3 nur der Syntaxprüfung und führt nichts aus. Generierter Code wird nie im HTTP-Prozess ausgeführt.
+Weitere Details:
+
+- `input` wird tief eingefroren. Der Code muss auf Kopien arbeiten (so steht es auch im Prompt).
+- `viz.step` ist in der Sandbox umhüllt: Es ermittelt die Zeile des Aufrufs aus dem QuickJS-Stack und setzt `step.line`. Ein vom Modell gesetztes `line` wird ignoriert.
+- Laufzeitfehler kommen mit Zeile im Modellcode zurück (`Zeile 3: cannot read property 'x' of null`) und gehen so in die Korrekturrunde.
+- Pro Anfrage startet ein neuer Worker. Ein Bubble-Sort-Lauf dauert lokal etwa 70 ms inklusive Start.
+- Einschränkung: Laut README ist `quickjs-emscripten` nicht auditiert und liegt unter Version 1.0. Für ein Uni-Projekt halte ich die zwei Schichten für angemessen. Für einen echten Betrieb käme eine Prozess- oder Container-Isolation dazu.
+
+`new Function` im Backend dient nur der Syntaxprüfung vor der Sandbox und führt nichts aus. Generierter Code wird nie im HTTP-Prozess ausgeführt.
 
 ## Verteilung
 
@@ -126,7 +135,7 @@ Noch nicht entschieden. Der Vorschlag aus `technologieauswahl.md` vom 13.10. ist
 flowchart LR
   B[Browser] -->|HTTP, im Dev über Vite-Proxy /api| N[Node 22: apps/api]
   N -->|HTTPS, API-Schlüssel nur im Backend| C[(api.anthropic.com)]
-  N --> W[worker_thread: Sandbox, Sprint 4]
+  N --> W[worker_thread: QuickJS-Sandbox]
 ```
 
 Der API-Schlüssel liegt nur als Umgebungsvariable im Backend und erreicht nie den Browser.
@@ -166,8 +175,8 @@ Zustände der Ergebnisfläche: leer, lädt, Rückfrage (Text der Frage plus Hinw
 
 ## Offene Punkte zur Abstimmung
 
-1. `step.line` und `trace.source` wie oben neu deuten und `interface-contract.md` Abschnitt 2 und 4 anpassen.
-2. Sandbox-Technik festlegen (Sprint 4).
+1. `interface-contract.md` Abschnitt 2 und 4 an die neue Bedeutung von `step.line` und `trace.source` anpassen.
+2. Sandbox-Prototyp im Team bestätigen (QuickJS im Worker).
 3. Graph-Rendering im Frontend; bisher werden vor allem Arrays dargestellt.
 4. Ob `scalar` im Renderer eine eigene Darstellung bekommt.
 5. API-Schlüssel beim Betreuer anfragen, sonst bleibt nur der Mock.

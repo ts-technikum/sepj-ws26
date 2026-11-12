@@ -1,9 +1,7 @@
 // Adapter für Claude Haiku 5.5 über die Anthropic API.
 //
 // Das SDK wird erst beim Erzeugen des Adapters geladen, damit Tests und der
-// Mock-Betrieb ohne Paket und ohne API-Schlüssel laufen.
-// Installation, sobald ein Schlüssel vorhanden ist:
-//   npm install @anthropic-ai/sdk -w @sepj/api
+// Mock-Betrieb ohne API-Schlüssel und ohne Netz laufen.
 
 import { LlmError } from '../errors.mjs';
 import { RESPONSE_SCHEMA } from '../responseSchema.mjs';
@@ -82,6 +80,7 @@ export async function createAnthropicAdapter({ apiKey, effort = 'medium', timeou
           inputTokens: response.usage.input_tokens,
           outputTokens: response.usage.output_tokens,
           cacheReadTokens: response.usage.cache_read_input_tokens ?? 0,
+          cacheWriteTokens: response.usage.cache_creation_input_tokens ?? 0,
         },
       };
     },

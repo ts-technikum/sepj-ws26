@@ -1,18 +1,32 @@
-// Ablauf von POST /api/generate (Sprint 3: bis einschließlich Code-Prüfung).
+// Ablauf von POST /api/generate.
 //
 // 1. Anfrage prüfen.
 // 2. Modell aufrufen (System-Prompt v1 + Wunsch + optionale Daten).
 // 3. Antwort parsen, input prüfen und normalisieren, Code statisch prüfen.
-// 4. Bei Fehlern eine Korrekturrunde mit den konkreten Meldungen.
-// 5. Ergebnis zurückgeben. Ausführung in der Sandbox folgt in Sprint 4,
-//    bis dahin ist trace null und execution.enabled false.
+// 4. Code in der Sandbox ausführen, Trace bauen und gegen das Schema prüfen.
+// 5. Bei Fehlern aus 3 oder 4 eine Korrekturrunde mit den konkreten Meldungen.
 
 import { LIMITS } from './limits.mjs';
 import { validateInput } from './validateInput.mjs';
 import { checkCode } from './checkCode.mjs';
+import { readFileSync } from 'node:fs';
+import { validateTrace } from '@sepj/trace-schema';
+import { runInSandbox, SandboxError } from '../sandbox/sandbox.mjs';
 import { SYSTEM_PROMPT, PROMPT_VERSION, buildUserMessage, buildRepairMessage } from '../llm/systemPrompt.mjs';
 
 export const FAILURE_MESSAGE = 'Visualisierung gescheitert';
+
+const TRACE_SCHEMA = JSON.parse(readFileSync(new URL('../../../../packages/trace-schema/trace.schema.json', import.meta.url), 'utf8'));
+
+/** Führt den geprüften Code aus und baut den Trace. Wirft SandboxError oder GenerateError. */
+export async function buildTrace(result, execute) {
+  const started = Date.now();
+  const { events, truncated } = await execute(result.code, result.input);
+  const trace = { version: '1.0', algorithm: result.algorithm, source: result.code, events, truncated };
+  const errors = validateTrace(trace, TRACE_SCHEMA);
+  if (errors.length) throw new GenerateError('TRACE_INVALID', 422, errors.slice(0, 10));
+  return { trace, durationMs: Date.now() - started };
+}
 
 export class GenerateError extends Error {
   constructor(code, status, details = [], meta = undefined) {
@@ -71,13 +85,13 @@ export function checkModelAnswer(text) {
   };
 }
 
-export async function generate(body, { llm, maxAttempts = LIMITS.maxAttempts, now = Date.now } = {}) {
+export async function generate(body, { llm, execute = runInSandbox, maxAttempts = LIMITS.maxAttempts, now = Date.now } = {}) {
   const requestErrors = validateRequest(body);
   if (requestErrors.length) throw new GenerateError('INVALID_REQUEST', 400, requestErrors);
 
   const request = { prompt: body.prompt, data: body.data ?? '' };
   const started = now();
-  const usage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0 };
+  const usage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 };
   const meta = (attempts) => ({
     provider: llm.provider, model: llm.model, promptVersion: PROMPT_VERSION,
     attempts, durationMs: now() - started, usage: { ...usage },
@@ -85,6 +99,7 @@ export async function generate(body, { llm, maxAttempts = LIMITS.maxAttempts, no
 
   const messages = [{ role: 'user', content: buildUserMessage(request) }];
   let lastErrors = [];
+  let lastFailure = { code: 'GENERATION_FAILED', status: 422 };
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     let reply;
@@ -96,15 +111,26 @@ export async function generate(body, { llm, maxAttempts = LIMITS.maxAttempts, no
     }
     for (const k of Object.keys(usage)) usage[k] += reply.usage?.[k] ?? 0;
 
-    const { result, errors } = checkModelAnswer(reply.text);
+    let { result, errors } = checkModelAnswer(reply.text);
+    if (result?.status === 'clarify') return { ...result, meta: meta(attempt) };
     if (result) {
-      if (result.status === 'clarify') return { ...result, meta: meta(attempt) };
-      return {
-        ...result,
-        trace: null,
-        execution: { enabled: false, reason: 'Die Sandbox folgt in Sprint 4.' },
-        meta: meta(attempt),
-      };
+      try {
+        const { trace, durationMs } = await buildTrace(result, execute);
+        return { ...result, trace, execution: { enabled: true, durationMs }, meta: meta(attempt) };
+      } catch (err) {
+        if (err instanceof SandboxError) {
+          if (err.code === 'SANDBOX_INTERNAL') throw new GenerateError(err.code, err.status, [err.message], meta(attempt));
+          lastFailure = { code: err.code, status: err.status };
+          errors = [`Ausführung: ${err.message}`];
+        } else if (err instanceof GenerateError) {
+          lastFailure = { code: err.code, status: err.status };
+          errors = err.details.map((d) => `Trace: ${d}`);
+        } else {
+          throw err;
+        }
+      }
+    } else {
+      lastFailure = { code: 'GENERATION_FAILED', status: 422 };
     }
     lastErrors = errors;
     messages.push(
@@ -112,5 +138,5 @@ export async function generate(body, { llm, maxAttempts = LIMITS.maxAttempts, no
       { role: 'user', content: buildRepairMessage(errors) },
     );
   }
-  throw new GenerateError('GENERATION_FAILED', 422, lastErrors, meta(maxAttempts));
+  throw new GenerateError(lastFailure.code, lastFailure.status, lastErrors, meta(maxAttempts));
 }

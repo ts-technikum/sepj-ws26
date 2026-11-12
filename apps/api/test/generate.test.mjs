@@ -50,14 +50,19 @@ test('Bubble Sort: übernimmt die Daten der Lehrperson und erzeugt gültigen Tra
   assert.equal(body.status, 'ok');
   assert.deepEqual(body.input, { kind: 'array', values: [5, 3, 8, 1] });
   assert.equal(body.inputSource, 'user');
-  assert.equal(body.trace, null);
-  assert.equal(body.execution.enabled, false);
+  assert.equal(body.execution.enabled, true);
+  assert.equal(body.trace.version, '1.0');
+  assert.equal(body.trace.source, body.code);
+  assert.equal(body.trace.truncated, false);
   assert.equal(body.meta.provider, 'mock');
   assert.equal(body.meta.promptVersion, PROMPT_VERSION);
   assert.equal(body.meta.attempts, 1);
 
-  const { trace, errors } = runInTest(body.code, body.input);
-  assert.deepEqual(errors, []);
+  const { trace } = body;
+  assert.deepEqual(validateTrace(trace, schema), []);
+  // Zeilen kommen von der Laufzeit und zeigen in den generierten Code.
+  const lines = body.code.split('\n');
+  for (const st of trace.events.filter((e) => e.op === 'step')) assert.match(lines[st.line - 1], /viz\.step/);
   const swaps = trace.events.filter((e) => e.op === 'swap');
   const a = [5, 3, 8, 1];
   for (const s of swaps) [a[s.i], a[s.j]] = [a[s.j], a[s.i]];
@@ -68,8 +73,8 @@ test('Binärbaum: Werte werden als Array übernommen, Code baut einen Graphen', 
   const body = await (await generate(base, { prompt: 'Binärbaum aufbauen', data: '8 3 10 1 6' })).json();
   assert.equal(body.status, 'ok');
   assert.deepEqual(body.input, { kind: 'array', values: [8, 3, 10, 1, 6] });
-  const { trace, errors } = runInTest(body.code, body.input);
-  assert.deepEqual(errors, []);
+  const { trace } = body;
+  assert.deepEqual(validateTrace(trace, schema), []);
   const last = trace.events.filter((e) => e.op === 'graph').at(-1);
   assert.equal(last.nodes.length, 5);
   assert.equal(last.edges.length, 4);
@@ -82,7 +87,7 @@ test('Binäre Suche ohne Daten: Beispiel wird als solches gekennzeichnet', () =>
   assert.equal(body.inputSource, 'example');
   assert.equal(body.input.kind, 'search');
   assert.equal(body.input.sorted, true);
-  assert.deepEqual(runInTest(body.code, body.input).errors, []);
+  assert.deepEqual(validateTrace(body.trace, schema), []);
 }));
 
 test('Unklarer Wunsch liefert eine Rückfrage statt Code', () => withApi({}, async (base) => {
@@ -157,6 +162,30 @@ test('Fehler des Anbieters werden auf HTTP-Status abgebildet', async () => {
       assert.equal((await res.json()).message, 'Visualisierung gescheitert');
     });
   }
+});
+
+test('Laufzeitfehler geht mit Zeilennummer in die Korrekturrunde', async () => {
+  const seen = [];
+  const llm = createMockAdapter({ script: [ok({ code: "viz.array('a', [1]);\nviz.step({ explanation: 'x' });\nnull.y;" }), ok()] });
+  const complete = llm.complete;
+  llm.complete = (args) => { seen.push(structuredClone(args.messages)); return complete(args); };
+  await withApi({ llm }, async (base) => {
+    const body = await (await generate(base, { prompt: 'Sort' })).json();
+    assert.equal(body.status, 'ok');
+    assert.equal(body.meta.attempts, 2);
+  });
+  assert.match(seen[1].at(-1).content, /Ausführung: Zeile 3:/);
+});
+
+test('Endlosschleife: 422 SANDBOX_TIMEOUT nach der letzten Runde', async () => {
+  const loop = ok({ code: "viz.array('a', [1]);\nviz.step({});\nwhile (true) {}" });
+  await withApi({ llm: createMockAdapter({ script: [loop, loop] }) }, async (base) => {
+    const res = await generate(base, { prompt: 'Sort' });
+    assert.equal(res.status, 422);
+    const body = await res.json();
+    assert.equal(body.error, 'SANDBOX_TIMEOUT');
+    assert.equal(body.message, 'Visualisierung gescheitert');
+  });
 });
 
 test('Health meldet den aktiven LLM-Adapter', () => withApi({}, async (base) => {
