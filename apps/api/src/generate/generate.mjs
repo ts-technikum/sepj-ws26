@@ -92,9 +92,12 @@ export async function generate(body, { llm, execute = runInSandbox, maxAttempts 
   const request = { prompt: body.prompt, data: body.data ?? '' };
   const started = now();
   const usage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 };
+  // Gründe für jede Korrekturrunde, z. B. ["Ausführung: Zeile 3: ..."]. Für die Prompt-Evaluation.
+  const repairs = [];
   const meta = (attempts) => ({
     provider: llm.provider, model: llm.model, promptVersion: PROMPT_VERSION,
     attempts, durationMs: now() - started, usage: { ...usage },
+    repairs: repairs.map((r) => [...r]),
   });
 
   const messages = [{ role: 'user', content: buildUserMessage(request) }];
@@ -133,6 +136,7 @@ export async function generate(body, { llm, execute = runInSandbox, maxAttempts 
       lastFailure = { code: 'GENERATION_FAILED', status: 422 };
     }
     lastErrors = errors;
+    repairs.push(errors);
     messages.push(
       { role: 'assistant', content: reply.assistantContent },
       { role: 'user', content: buildRepairMessage(errors) },

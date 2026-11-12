@@ -17,6 +17,7 @@
     "dev:api": "npm run dev -w @sepj/api",
     "dev:web": "npm run dev -w @sepj/web",
     "build:web": "npm run build -w @sepj/web",
-    "check:llm": "npm run check:llm -w @sepj/api"
+    "check:llm": "npm run check:llm -w @sepj/api",
+    "eval": "npm run eval -w @sepj/api --"
   }
 }
