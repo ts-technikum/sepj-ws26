@@ -1,18 +1,55 @@
-// Einheitliche Schnittstelle zwischen React und dem Backend.
+
+// Einheitliche Schnittstelle zwischen React und Backend.
 // Im Entwicklungsmodus leitet Vite /api an Port 3001 weiter.
+
 async function request(path, options = {}) {
   let response;
-  try { response = await fetch(path, options); }
-  catch { throw new Error('Backend nicht erreichbar. Läuft npm run dev:api?'); }
+  try {
+    response = await fetch(path, options);
+  } catch {
+    throw new Error('Backend nicht erreichbar. Läuft npm run dev:api?');
+  }
+
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.errors?.join('; ') || payload.message || `HTTP ${response.status}`);
+
+  if (!response.ok) {
+    const message =
+      payload.message ||
+      (Array.isArray(payload.errors)
+        ? payload.errors.join('; ')
+        : '') ||
+      `HTTP ${response.status}`;
+
+    const error = new Error(message);
+    error.details = Array.isArray(payload.details)
+      ? payload.details
+      : Array.isArray(payload.errors)
+        ? payload.errors
+        : [];
+    error.code = payload.error || '';
+    error.status = response.status;
+    throw error;
+  }
+
   return payload;
 }
-export const getApiHealth = () => request('/api/health');
-export const validateTraceOnServer = trace => request('/api/traces/validate', {
-  method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(trace)
-});
-// Die LLM-Pipeline wird hier später integriert, nicht durch einen Dummy ersetzt.
-export const generateTrace = input => request('/api/generate', {
-  method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(input)
-});
+
+export const getApiHealth = () =>
+  request('/api/health');
+
+export const validateTraceOnServer = trace =>
+  request('/api/traces/validate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(trace),
+  });
+
+export const generateTrace = ({ prompt, data }) =>
+  request('/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      prompt,
+      ...(data ? { data } : {}),
+    }),
+  });
