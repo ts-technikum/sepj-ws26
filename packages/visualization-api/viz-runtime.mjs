@@ -43,7 +43,9 @@ export function createViz({ maxEvents = 50000 } = {}) {
         edges: new Map(edges.map(e => [e.id, { ...e, state: e.state ?? 'default' }])),
         directed,
       });
-      push({ op: 'graph', id, nodes, edges, directed });
+      // Kopien ins Event: Der Aufrufer darf seine Listen danach weiter
+      // verändern, ohne frühere Events nachträglich mitzuändern.
+      push({ op: 'graph', id, nodes: nodes.map(n => ({ ...n })), edges: edges.map(e => ({ ...e })), directed });
     },
     scalar(id, value) {
       const prev = structures.get(id)?.value ?? null;

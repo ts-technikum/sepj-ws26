@@ -1,5 +1,7 @@
 # Architektur und Anforderungen
 
+> **Überholt seit Sprint 3 (06.11.2026).** Dieses Dokument beschreibt den ursprünglichen Ansatz mit Pseudocode als Eingabe. Aktuell gelten [`architektur-sprint3.md`](architektur-sprint3.md) (Komponenten, Ablauf, Sandbox), [`api-generate.md`](api-generate.md) (Schnittstelle) und [`deployment.md`](deployment.md). Die Anforderungen und Qualitätsziele unten gelten sinngemäß weiter, „Pseudocode“ ist dabei durch „Wunsch und Daten der Lehrperson“ zu ersetzen.
+
 ## Zweck und Umfang
 
 Die Anwendung hilft Lehrenden, den Ablauf eines eigenen Algorithmus anhand von Pseudocode schrittweise zu erklären. Die erste Version verarbeitet Arrays, Graphen und Skalare. Referenzfälle sind Bubble Sort, Insertion Sort, binäre Suche, Breitensuche und Tiefensuche.

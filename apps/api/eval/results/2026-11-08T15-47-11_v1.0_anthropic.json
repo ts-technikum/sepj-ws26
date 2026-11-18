@@ -1,0 +1,465 @@
+{
+  "meta": {
+    "createdAt": "2026-11-08T15:47:11.159Z",
+    "provider": "anthropic",
+    "model": "claude-haiku-5-5",
+    "promptVersion": "v1.0",
+    "effort": "medium",
+    "repeat": 1
+  },
+  "summary": {
+    "runs": 10,
+    "passed": 10,
+    "firstAttempt": 9,
+    "errors": 0,
+    "avgDurationMs": 8202,
+    "tokens": {
+      "input": 2316,
+      "output": 20660,
+      "cacheRead": 62080,
+      "cacheWrite": 6208
+    }
+  },
+  "runs": [
+    {
+      "id": "hard-quicksort",
+      "set": "schwer",
+      "repeat": 1,
+      "negative": false,
+      "pass": true,
+      "failedChecks": [],
+      "status": "ok",
+      "errorCode": null,
+      "attempts": 1,
+      "durationMs": 13014,
+      "usage": {
+        "inputTokens": 52,
+        "outputTokens": 3270,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 6208
+      },
+      "checks": {
+        "status": true,
+        "kind": true,
+        "inputSource": true,
+        "values": true,
+        "traceComplete": true,
+        "result": true
+      },
+      "algorithm": "Quicksort (Lomuto-Partition)",
+      "inputSource": "user",
+      "inputNote": "",
+      "question": null,
+      "input": {
+        "kind": "array",
+        "values": [
+          7,
+          2,
+          9,
+          4,
+          3,
+          8
+        ]
+      },
+      "steps": 20,
+      "details": null,
+      "code": "const a = [...input.values];\nviz.array('a', a);\nviz.step({ explanation: `Ausgangslage: ${a.join(', ')}` });\nfunction quick(lo, hi) {\nif (lo > hi) return;\nif (lo === hi) { viz.highlight('a', { indices: [lo, lo] }, 'sorted'); viz.step({ explanation: `${a[lo]} steht allein und ist sortiert.` }); return; }\nconst pivot = a[hi];\nviz.pointer('a', 'pivot', hi);\nviz.highlight('a', { indices: [hi, hi] }, 'active');\nviz.step({ explanation: `Pivot ist ${pivot} (Index ${hi}) im Bereich ${lo} bis ${hi}.` });\nlet i = lo;\nfor (let j = lo; j < hi; j++) {\nviz.pointer('a', 'i', i);\nviz.pointer('a', 'j', j);\nviz.highlight('a', { indices: [j, hi] }, 'compare');\nconst vj = a[j];\nif (vj < pivot) {\nconst vi = a[i];\nif (i !== j) { a[i] = vj; a[j] = vi; viz.swap('a', i, j); }\ni++;\nviz.step({ explanation: `${vj} < ${pivot}: gehört in den linken Bereich.` });\n} else {\nviz.step({ explanation: `${vj} ≥ ${pivot}: bleibt im rechten Bereich.` });\n}\n}\nif (i !== hi) { const t = a[i]; a[i] = a[hi]; a[hi] = t; viz.swap('a', i, hi); }\nviz.highlight('a', { indices: [i, i] }, 'sorted');\nviz.step({ explanation: `Pivot ${pivot} steht jetzt an Index ${i}.` });\nquick(lo, i - 1);\nquick(i + 1, hi);\n}\nquick(0, a.length - 1);\nviz.highlight('a', { range: [0, a.length - 1] }, 'sorted');\nviz.step({ explanation: `Fertig sortiert: ${a.join(', ')}` });"
+    },
+    {
+      "id": "hard-heap",
+      "set": "schwer",
+      "repeat": 1,
+      "negative": false,
+      "pass": true,
+      "failedChecks": [],
+      "status": "ok",
+      "errorCode": null,
+      "attempts": 1,
+      "durationMs": 8483,
+      "usage": {
+        "inputTokens": 63,
+        "outputTokens": 2103,
+        "cacheReadTokens": 6208,
+        "cacheWriteTokens": 0
+      },
+      "checks": {
+        "status": true,
+        "kind": true,
+        "inputSource": true,
+        "values": true,
+        "traceComplete": true
+      },
+      "algorithm": "Max-Heap aufbauen",
+      "inputSource": "user",
+      "inputNote": "",
+      "question": null,
+      "input": {
+        "kind": "array",
+        "values": [
+          4,
+          10,
+          3,
+          5,
+          1
+        ]
+      },
+      "steps": 10,
+      "details": null,
+      "code": "const a = [...input.values];\nconst n = a.length;\nviz.array('a', a);\nviz.step({ explanation: `Ausgangslage: ${a.join(', ')}. Ich baue den Max-Heap von unten nach oben auf.` });\nfunction siftDown(start, end) {\n  let i = start;\n  while (true) {\n    let largest = i;\n    const l = 2 * i + 1;\n    const r = 2 * i + 2;\n    if (l < end) {\n      viz.highlight('a', { indices: [i, l] }, 'compare');\n      if (a[l] > a[largest]) largest = l;\n    }\n    if (r < end) {\n      viz.highlight('a', { indices: [largest, r] }, 'compare');\n      if (a[r] > a[largest]) largest = r;\n    }\n    if (largest === i) {\n      viz.step({ explanation: `${a[i]} ist größer als seine Kinder, es bleibt stehen.` });\n      break;\n    }\n    viz.step({ explanation: `${a[i]} ist kleiner als ${a[largest]}, also tauschen.` });\n    [a[i], a[largest]] = [a[largest], a[i]];\n    viz.swap('a', i, largest);\n    viz.step({ explanation: `Getauscht: ${a.join(', ')}` });\n    i = largest;\n  }\n}\nfor (let i = Math.floor(n / 2) - 1; i >= 0; i--) {\n  viz.pointer('a', 'i', i);\n  viz.step({ explanation: `Knoten an Index ${i} (Wert ${a[i]}) wird eingesickert.` });\n  siftDown(i, n);\n}\nviz.step({ explanation: `Max-Heap fertig: ${a.join(', ')}` });"
+    },
+    {
+      "id": "hard-english",
+      "set": "schwer",
+      "repeat": 1,
+      "negative": false,
+      "pass": true,
+      "failedChecks": [],
+      "status": "ok",
+      "errorCode": null,
+      "attempts": 1,
+      "durationMs": 7882,
+      "usage": {
+        "inputTokens": 43,
+        "outputTokens": 1901,
+        "cacheReadTokens": 6208,
+        "cacheWriteTokens": 0
+      },
+      "checks": {
+        "status": true,
+        "kind": true,
+        "inputSource": true,
+        "values": true,
+        "traceComplete": true,
+        "result": true
+      },
+      "algorithm": "Selection Sort",
+      "inputSource": "user",
+      "inputNote": "Die Werte 3, 1, 2 wurden in dieser Reihenfolge übernommen.",
+      "question": null,
+      "input": {
+        "kind": "array",
+        "values": [
+          3,
+          1,
+          2
+        ]
+      },
+      "steps": 9,
+      "details": null,
+      "code": "const a = [...input.values];\nviz.array('a', a);\nviz.step({ explanation: `Ausgangslage: ${a.join(', ')}` });\nfor (let i = 0; i < a.length - 1; i++) {\n  let min = i;\n  viz.pointer('a', 'min', min);\n  viz.step({ explanation: `Suche das Minimum ab Position ${i}, vorläufig ${a[min]}.` });\n  for (let j = i + 1; j < a.length; j++) {\n    viz.highlight('a', { indices: [min, j] }, 'compare');\n    if (a[j] < a[min]) {\n      min = j;\n      viz.pointer('a', 'min', min);\n      viz.step({ explanation: `${a[j]} < ${a[min]}: neues Minimum ${a[min]} an Position ${min}.` });\n    } else {\n      viz.step({ explanation: `${a[j]} ist nicht kleiner als ${a[min]}.` });\n    }\n  }\n  if (min !== i) {\n    [a[i], a[min]] = [a[min], a[i]];\n    viz.swap('a', i, min);\n    viz.highlight('a', { range: [0, i] }, 'sorted');\n    viz.step({ explanation: `Minimum ${a[i]} wird an Position ${i} getauscht: ${a.join(', ')}` });\n  } else {\n    viz.highlight('a', { range: [0, i] }, 'sorted');\n    viz.step({ explanation: `${a[i]} steht bereits an Position ${i}.` });\n  }\n}\nviz.highlight('a', { range: [0, a.length - 1] }, 'sorted');\nviz.step({ explanation: `Fertig sortiert: ${a.join(', ')}` });"
+    },
+    {
+      "id": "hard-messy-data",
+      "set": "schwer",
+      "repeat": 1,
+      "negative": false,
+      "pass": true,
+      "failedChecks": [],
+      "status": "ok",
+      "errorCode": null,
+      "attempts": 1,
+      "durationMs": 6511,
+      "usage": {
+        "inputTokens": 54,
+        "outputTokens": 1656,
+        "cacheReadTokens": 6208,
+        "cacheWriteTokens": 0
+      },
+      "checks": {
+        "status": true,
+        "kind": true,
+        "inputSource": true,
+        "values": true,
+        "traceComplete": true,
+        "result": true
+      },
+      "algorithm": "Bubble Sort",
+      "inputSource": "user",
+      "inputNote": "Die Werte 5, 3, 8 und 1 wurden in dieser Reihenfolge übernommen. Die uneinheitlichen Trennzeichen (Semikolons, Leerzeichen) wurden vereinheitlicht und die leere Angabe ignoriert.",
+      "question": null,
+      "input": {
+        "kind": "array",
+        "values": [
+          5,
+          3,
+          8,
+          1
+        ]
+      },
+      "steps": 15,
+      "details": null,
+      "code": "const a = [...input.values];\nviz.array('a', a);\nviz.step({ explanation: `Ausgangslage: ${a.join(', ')}` });\nfor (let end = a.length - 1; end > 0; end--) {\n  for (let i = 0; i < end; i++) {\n    viz.highlight('a', { indices: [i, i + 1] }, 'compare');\n    if (a[i] > a[i + 1]) {\n      viz.step({ explanation: `${a[i]} > ${a[i + 1]}, also tauschen.` });\n      [a[i], a[i + 1]] = [a[i + 1], a[i]];\n      viz.swap('a', i, i + 1);\n      viz.highlight('a', { indices: [i, i + 1] }, 'swap');\n      viz.step({ explanation: `Getauscht: ${a.join(', ')}` });\n    } else {\n      viz.step({ explanation: `${a[i]} ≤ ${a[i + 1]}, kein Tausch.` });\n    }\n  }\n  viz.highlight('a', { range: [end, a.length - 1] }, 'sorted');\n  viz.step({ explanation: `${a[end]} steht an seinem endgültigen Platz.` });\n}\nviz.highlight('a', { range: [0, a.length - 1] }, 'sorted');\nviz.step({ explanation: `Fertig sortiert: ${a.join(', ')}` });"
+    },
+    {
+      "id": "hard-duplicates-negative",
+      "set": "schwer",
+      "repeat": 1,
+      "negative": false,
+      "pass": true,
+      "failedChecks": [],
+      "status": "ok",
+      "errorCode": null,
+      "attempts": 1,
+      "durationMs": 6614,
+      "usage": {
+        "inputTokens": 48,
+        "outputTokens": 1733,
+        "cacheReadTokens": 6208,
+        "cacheWriteTokens": 0
+      },
+      "checks": {
+        "status": true,
+        "kind": true,
+        "inputSource": true,
+        "values": true,
+        "traceComplete": true,
+        "result": true
+      },
+      "algorithm": "Insertion Sort",
+      "inputSource": "user",
+      "inputNote": "Die Daten wurden unverändert übernommen.",
+      "question": null,
+      "input": {
+        "kind": "array",
+        "values": [
+          3,
+          -1,
+          3,
+          0
+        ]
+      },
+      "steps": 16,
+      "details": null,
+      "code": "const a = [...input.values];\nviz.array('a', a);\nviz.step({ explanation: `Ausgangslage: ${a.join(', ')}` });\nfor (let i = 1; i < a.length; i++) {\n  let j = i;\n  viz.pointer('a', 'key', i);\n  viz.step({ explanation: `Füge ${a[i]} in den sortierten Teil links davon ein.` });\n  while (j > 0 && a[j - 1] > a[j]) {\n    viz.highlight('a', { indices: [j - 1, j] }, 'compare');\n    viz.step({ explanation: `${a[j - 1]} > ${a[j]}, also tauschen.` });\n    [a[j - 1], a[j]] = [a[j], a[j - 1]];\n    viz.swap('a', j - 1, j);\n    j--;\n    viz.pointer('a', 'key', j);\n    viz.step({ explanation: `Getauscht: ${a.join(', ')}` });\n  }\n  if (j > 0) {\n    viz.highlight('a', { indices: [j - 1, j] }, 'compare');\n    viz.step({ explanation: `${a[j - 1]} ≤ ${a[j]}, Einfügeposition gefunden.` });\n  }\n  viz.highlight('a', { range: [0, i] }, 'sorted');\n  viz.step({ explanation: `Die ersten ${i + 1} Elemente sind sortiert: ${a.slice(0, i + 1).join(', ')}` });\n}\nviz.highlight('a', { range: [0, a.length - 1] }, 'sorted');\nviz.step({ explanation: `Fertig sortiert: ${a.join(', ')}` });"
+    },
+    {
+      "id": "hard-strings",
+      "set": "schwer",
+      "repeat": 1,
+      "negative": false,
+      "pass": true,
+      "failedChecks": [],
+      "status": "ok",
+      "errorCode": null,
+      "attempts": 1,
+      "durationMs": 5466,
+      "usage": {
+        "inputTokens": 65,
+        "outputTokens": 1503,
+        "cacheReadTokens": 6208,
+        "cacheWriteTokens": 0
+      },
+      "checks": {
+        "status": true,
+        "kind": true,
+        "inputSource": true,
+        "values": true,
+        "traceComplete": true,
+        "result": true
+      },
+      "algorithm": "Bubble Sort (alphabetisch)",
+      "inputSource": "user",
+      "inputNote": "",
+      "question": null,
+      "input": {
+        "kind": "array",
+        "values": [
+          "Birne",
+          "Apfel",
+          "Kiwi"
+        ]
+      },
+      "steps": 8,
+      "details": null,
+      "code": "const a = [...input.values];\nviz.array('a', a);\nviz.step({ explanation: `Ausgangslage: ${a.join(', ')}` });\nfor (let end = a.length - 1; end > 0; end--) {\n  for (let i = 0; i < end; i++) {\n    viz.highlight('a', { indices: [i, i + 1] }, 'compare');\n    if (a[i] > a[i + 1]) {\n      viz.step({ explanation: `${a[i]} kommt alphabetisch nach ${a[i + 1]}, also tauschen.` });\n      [a[i], a[i + 1]] = [a[i + 1], a[i]];\n      viz.swap('a', i, i + 1);\n      viz.highlight('a', { indices: [i, i + 1] }, 'swap');\n      viz.step({ explanation: `Getauscht: ${a.join(', ')}` });\n    } else {\n      viz.step({ explanation: `${a[i]} steht alphabetisch vor ${a[i + 1]}, kein Tausch.` });\n    }\n  }\n  viz.highlight('a', { range: [end, a.length - 1] }, 'sorted');\n  viz.step({ explanation: `${a[end]} steht an seinem endgültigen Platz.` });\n}\nviz.highlight('a', { range: [0, a.length - 1] }, 'sorted');\nviz.step({ explanation: `Fertig sortiert: ${a.join(', ')}` });"
+    },
+    {
+      "id": "hard-binsearch-missing",
+      "set": "schwer",
+      "repeat": 1,
+      "negative": false,
+      "pass": true,
+      "failedChecks": [],
+      "status": "ok",
+      "errorCode": null,
+      "attempts": 1,
+      "durationMs": 6354,
+      "usage": {
+        "inputTokens": 52,
+        "outputTokens": 1534,
+        "cacheReadTokens": 6208,
+        "cacheWriteTokens": 0
+      },
+      "checks": {
+        "status": true,
+        "kind": true,
+        "inputSource": true,
+        "values": true,
+        "target": true,
+        "traceComplete": true
+      },
+      "algorithm": "Binäre Suche",
+      "inputSource": "user",
+      "inputNote": "Die Werte 1, 3, 5, 7 sind bereits aufsteigend sortiert und wurden unverändert übernommen.",
+      "question": null,
+      "input": {
+        "kind": "search",
+        "values": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "target": 4,
+        "sorted": true
+      },
+      "steps": 6,
+      "details": null,
+      "code": "const a = [...input.values];\nconst target = input.target;\nviz.array('a', a);\nviz.scalar('target', target);\nviz.step({ explanation: `Ausgangslage: Suche ${target} in ${a.join(', ')}` });\nlet lo = 0;\nlet hi = a.length - 1;\nlet found = -1;\nwhile (lo <= hi) {\n  const mid = Math.floor((lo + hi) / 2);\n  viz.highlight('a', { range: [lo, hi] }, 'range');\n  viz.pointer('a', 'mid', mid);\n  viz.highlight('a', { indices: [mid, mid] }, 'compare');\n  viz.step({ explanation: `Mitte ist Index ${mid} mit Wert ${a[mid]}.` });\n  if (a[mid] === target) {\n    found = mid;\n    viz.step({ explanation: `${a[mid]} ist gleich ${target}, Treffer bei Index ${mid}.` });\n    break;\n  } else if (a[mid] < target) {\n    viz.step({ explanation: `${a[mid]} < ${target}, also die linke Hälfte verwerfen.` });\n    lo = mid + 1;\n  } else {\n    viz.step({ explanation: `${a[mid]} > ${target}, also die rechte Hälfte verwerfen.` });\n    hi = mid - 1;\n  }\n}\nif (found < 0) {\n  viz.step({ explanation: `${target} ist nicht im Array enthalten.` });\n} else {\n  viz.step({ explanation: `Ergebnis: ${target} steht an Index ${found}.` });\n}"
+    },
+    {
+      "id": "hard-fibonacci",
+      "set": "schwer",
+      "repeat": 1,
+      "negative": false,
+      "pass": true,
+      "failedChecks": [],
+      "status": "ok",
+      "errorCode": null,
+      "attempts": 2,
+      "durationMs": 9996,
+      "usage": {
+        "inputTokens": 1817,
+        "outputTokens": 2331,
+        "cacheReadTokens": 12416,
+        "cacheWriteTokens": 0
+      },
+      "checks": {
+        "status": true,
+        "kind": true,
+        "inputSource": true,
+        "params": true,
+        "traceComplete": true,
+        "result": true
+      },
+      "algorithm": "Fibonacci (iterativ)",
+      "inputSource": "user",
+      "inputNote": "n = 10 wurde unverändert übernommen.",
+      "question": null,
+      "input": {
+        "kind": "scalar",
+        "params": {
+          "n": 10
+        }
+      },
+      "steps": 11,
+      "details": null,
+      "code": "const p = input.params;\nconst n = p.n !== undefined ? p.n : p.find((q) => q.name === 'n').value;\nviz.scalar('a', 0);\nviz.scalar('b', 1);\nviz.scalar('i', 0);\nviz.step({ explanation: 'Ausgangslage: F(0) = 0, F(1) = 1, gesucht ist F(' + n + ').' });\nlet a = 0;\nlet b = 1;\nfor (let i = 2; i <= n; i++) {\n  const c = a + b;\n  a = b;\n  b = c;\n  viz.setScalar('a', a);\n  viz.setScalar('b', b);\n  viz.setScalar('i', i);\n  viz.step({ explanation: 'Schritt ' + i + ': F(' + i + ') = ' + b });\n}\nconst result = n === 0 ? 0 : b;\nviz.step({ explanation: 'Ergebnis: F(' + n + ') = ' + result });"
+    },
+    {
+      "id": "hard-dijkstra-unreachable",
+      "set": "schwer",
+      "repeat": 1,
+      "negative": false,
+      "pass": true,
+      "failedChecks": [],
+      "status": "ok",
+      "errorCode": null,
+      "attempts": 1,
+      "durationMs": 16386,
+      "usage": {
+        "inputTokens": 56,
+        "outputTokens": 4474,
+        "cacheReadTokens": 6208,
+        "cacheWriteTokens": 0
+      },
+      "checks": {
+        "status": true,
+        "kind": true,
+        "inputSource": true,
+        "nodeIds": true,
+        "start": true,
+        "weighted": true,
+        "traceComplete": true
+      },
+      "algorithm": "Dijkstra-Algorithmus",
+      "inputSource": "user",
+      "inputNote": "Die Knoten A, B, C, D und E wurden aus den Kantenangaben übernommen. Der Graph wird als ungerichtet gelesen, die Gewichte sind wie angegeben. D und E sind von A aus nicht erreichbar.",
+      "question": null,
+      "input": {
+        "kind": "graph",
+        "nodes": [
+          {
+            "id": "A"
+          },
+          {
+            "id": "B"
+          },
+          {
+            "id": "C"
+          },
+          {
+            "id": "D"
+          },
+          {
+            "id": "E"
+          }
+        ],
+        "edges": [
+          {
+            "id": "A-B",
+            "from": "A",
+            "to": "B",
+            "weight": 2
+          },
+          {
+            "id": "B-C",
+            "from": "B",
+            "to": "C",
+            "weight": 1
+          },
+          {
+            "id": "D-E",
+            "from": "D",
+            "to": "E",
+            "weight": 3
+          }
+        ],
+        "directed": false,
+        "start": "A"
+      },
+      "steps": 10,
+      "details": null,
+      "code": "const { nodes, edges, directed, start } = input;\nviz.graph('g', { nodes, edges, directed });\nconst dist = new Map();\nconst prev = new Map();\nconst done = new Set();\nfor (const n of nodes) dist.set(n.id, Infinity);\ndist.set(start, 0);\nconst fmt = (d) => (d === Infinity ? '∞' : String(d));\nconst summary = () => nodes.map((n) => `${n.id}=${fmt(dist.get(n.id))}`).join(', ');\nviz.nodeState('g', start, 'frontier');\nviz.step({ explanation: `Ausgangslage: ${start} hat Distanz 0, alle anderen ∞.` });\nwhile (true) {\n  let cur = null;\n  for (const n of nodes) {\n    if (done.has(n.id) || dist.get(n.id) === Infinity) continue;\n    if (cur === null || dist.get(n.id) < dist.get(cur)) cur = n.id;\n  }\n  if (cur === null) break;\n  viz.nodeState('g', cur, 'active');\n  viz.step({ explanation: `Wähle ${cur} mit kleinster Distanz ${dist.get(cur)}.` });\n  for (const e of edges) {\n    let other = null;\n    if (e.from === cur) other = e.to;\n    else if (!directed && e.to === cur) other = e.from;\n    if (other === null || done.has(other)) continue;\n    const w = e.weight ?? 1;\n    const nd = dist.get(cur) + w;\n    if (nd < dist.get(other)) {\n      const old = prev.get(other);\n      if (old !== undefined) viz.edgeState('g', old, 'default');\n      dist.set(other, nd);\n      prev.set(other, e.id);\n      viz.edgeState('g', e.id, 'tree');\n      viz.nodeState('g', other, 'frontier');\n      viz.step({ explanation: `Über ${cur}: ${other} wird ${nd} (Kante ${e.id}, Gewicht ${w}).` });\n    } else {\n      viz.edgeState('g', e.id, 'rejected');\n      viz.step({ explanation: `Über ${cur} wären es ${nd} für ${other}, nicht kürzer als ${fmt(dist.get(other))}.` });\n    }\n  }\n  done.add(cur);\n  viz.nodeState('g', cur, 'visited');\n  viz.step({ explanation: `${cur} ist fertig. Stand: ${summary()}` });\n}\nviz.step({ explanation: `Fertig. Kürzeste Distanzen von ${start}: ${summary()}` });"
+    },
+    {
+      "id": "hard-neg-offtopic-code",
+      "set": "schwer",
+      "repeat": 1,
+      "negative": true,
+      "pass": true,
+      "failedChecks": [],
+      "status": "clarify",
+      "errorCode": null,
+      "attempts": 1,
+      "durationMs": 1309,
+      "usage": {
+        "inputTokens": 66,
+        "outputTokens": 155,
+        "cacheReadTokens": 6208,
+        "cacheWriteTokens": 0
+      },
+      "checks": {
+        "status": true
+      },
+      "algorithm": null,
+      "inputSource": null,
+      "inputNote": null,
+      "question": "Dies ist keine Algorithmus- oder Datenstruktur-Darstellung, die ich visualisieren kann. Meinst du stattdessen einen Algorithmus, etwa Sortieren, Suchen, Graphen-Durchlauf oder eine Berechnung, den du in Python betrachten möchtest?",
+      "input": null,
+      "steps": null,
+      "details": null,
+      "code": null
+    }
+  ]
+}
